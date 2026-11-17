@@ -1,0 +1,1944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Aeron & Naya • Smart Budget Tracker</title>
+  
+  <!-- Mobile Web App Metas -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Budget Tracker">
+  <meta name="theme-color" content="#0f172a">
+
+  <!-- Tailwind CSS CDN & Google Fonts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+            },
+            aeron: '#3b82f6',
+            naya: '#ec4899',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Mobile-first polish & safe area paddings */
+    body {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    input, textarea, select {
+      user-select: auto;
+    }
+    .pb-safe {
+      padding-bottom: env(safe-area-inset-bottom, 1.5rem);
+    }
+    .pt-safe {
+      padding-top: env(safe-area-inset-top, 1rem);
+    }
+    /* Hide scrollbars for clean app feel */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col antialiased selection:bg-emerald-500 selection:text-white">
+
+  <!-- TOP HEADER BAR -->
+  <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 px-4 pt-safe py-3">
+    <div class="max-w-md mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 shadow-lg shadow-emerald-500/20">
+          <i data-lucide="wallet" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-1.5">
+            Budget Tracker
+            <span class="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Live Sync</span>
+          </h1>
+          <p class="text-xs text-slate-400 flex items-center gap-1 font-mono">
+            <span class="w-2 h-2 rounded-full bg-blue-400 inline-block"></span> Aeron &nbsp;+&nbsp;
+            <span class="w-2 h-2 rounded-full bg-pink-400 inline-block"></span> Naya
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1.5">
+        <button id="openBudgetModalBtn" class="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 text-slate-300 transition-all active:scale-95" title="Monthly Limiter & Bills">
+          <i data-lucide="sliders" class="w-4 h-4 text-emerald-400"></i>
+        </button>
+        <button id="openSettingsModalBtn" class="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 text-slate-300 transition-all active:scale-95" title="Sync & Reminders">
+          <i data-lucide="settings" class="w-4 h-4 text-slate-300"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN SCROLLABLE CONTENT -->
+  <main class="flex-1 max-w-md mx-auto w-full px-4 pt-4 pb-28 space-y-4">
+
+    <!-- MONTH SELECTOR & QUICK DATE -->
+    <div class="flex items-center justify-between text-xs font-medium text-slate-400 bg-slate-900/60 p-2 rounded-2xl border border-slate-800">
+      <div class="flex items-center gap-1.5 pl-2">
+        <i data-lucide="calendar" class="w-4 h-4 text-emerald-400"></i>
+        <select id="monthFilterSelect" class="bg-transparent text-slate-200 font-semibold focus:outline-none cursor-pointer">
+          <!-- Dynamically populated -->
+        </select>
+      </div>
+      <div class="text-[11px] font-mono bg-slate-800 px-2.5 py-1 rounded-xl text-slate-300" id="currentDateDisplay">
+        Today
+      </div>
+    </div>
+
+    <!-- WHO OWES WHOM SETTLEMENT BANNER -->
+    <div id="settlementCard" class="relative overflow-hidden rounded-3xl p-4 bg-gradient-to-br from-slate-900 via-slate-850 to-slate-900 border border-slate-800 shadow-xl transition-all">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs uppercase tracking-wider font-bold text-slate-400 flex items-center gap-1.5">
+          <i data-lucide="scale" class="w-3.5 h-3.5 text-emerald-400"></i>
+          Shared Settlement
+        </span>
+        <button id="quickSettleBtn" class="text-[11px] font-semibold text-emerald-400 hover:text-emerald-300 underline underline-offset-2 flex items-center gap-1">
+          <i data-lucide="check-circle" class="w-3 h-3"></i> Record Settle
+        </button>
+      </div>
+
+      <!-- Main Balance Callout -->
+      <div id="settlementCallout" class="p-3 rounded-2xl bg-slate-950/70 border border-slate-800/90 text-sm font-semibold flex items-center justify-between">
+        <span class="flex items-center gap-2">
+          <span class="text-lg">💡</span>
+          <span id="settlementText" class="text-slate-200">Calculating balance...</span>
+        </span>
+      </div>
+
+      <!-- Breakdown aeronaut & naya -->
+      <div class="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-slate-800/80 text-xs">
+        <div class="space-y-1">
+          <div class="flex items-center justify-between text-slate-400">
+            <span class="flex items-center gap-1">
+              <span class="w-2 h-2 rounded-full bg-blue-500"></span> Aeron Spent:
+            </span>
+            <span id="aeronSpentDisplay" class="font-mono text-slate-200 font-bold">₱0.00</span>
+          </div>
+          <div class="flex items-center justify-between text-slate-500 text-[11px]">
+            <span>True Share:</span>
+            <span id="aeronShareDisplay" class="font-mono text-slate-300">₱0.00</span>
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <div class="flex items-center justify-between text-slate-400">
+            <span class="flex items-center gap-1">
+              <span class="w-2 h-2 rounded-full bg-pink-500"></span> Naya Spent:
+            </span>
+            <span id="nayaSpentDisplay" class="font-mono text-slate-200 font-bold">₱0.00</span>
+          </div>
+          <div class="flex items-center justify-between text-slate-500 text-[11px]">
+            <span>True Share:</span>
+            <span id="nayaShareDisplay" class="font-mono text-slate-300">₱0.00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MONTHLY LIMITER & FIXED BILLS CARD -->
+    <div class="rounded-3xl p-4 bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 shadow-xl space-y-3.5">
+      <div class="flex items-center justify-between">
+        <div>
+          <span class="text-xs uppercase tracking-wider font-bold text-slate-400 flex items-center gap-1.5">
+            <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-400"></i>
+            Monthly Spending Limiter
+          </span>
+          <h2 class="text-lg font-extrabold text-white mt-0.5" id="discretionaryRemainingDisplay">₱0.00 Left</h2>
+        </div>
+        <button id="editLimiterBtn" class="px-2.5 py-1 text-xs font-medium rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700">
+          Configure
+        </button>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="space-y-1.5">
+        <div class="flex justify-between text-xs">
+          <span class="text-slate-400">Safe-to-Spend Burn:</span>
+          <span id="limiterPercentDisplay" class="font-mono font-bold text-emerald-400">0%</span>
+        </div>
+        <div class="h-3 w-full bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700/50">
+          <div id="limiterProgressBar" class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-500" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Limiter Math Breakdown -->
+      <div class="bg-slate-950/80 rounded-2xl p-3 border border-slate-800/80 space-y-2 text-xs">
+        <div class="flex justify-between items-center text-slate-400">
+          <span>Monthly Overall Limit:</span>
+          <span id="cfgTotalBudget" class="font-mono text-slate-200 font-bold">₱60,000.00</span>
+        </div>
+        
+        <div class="flex justify-between items-center text-amber-400/90 text-[11px] pl-2 border-l-2 border-amber-500/50">
+          <span class="flex items-center gap-1">
+            <i data-lucide="receipt" class="w-3 h-3"></i> Minus Fixed Bills (Water, Power, Rent):
+          </span>
+          <span id="cfgFixedBillsTotal" class="font-mono font-semibold">-₱22,674.89</span>
+        </div>
+
+        <div class="flex justify-between items-center text-emerald-400/90 text-xs font-semibold pt-1 border-t border-slate-800">
+          <span>= Net Safe-to-Spend Pool:</span>
+          <span id="cfgDiscretionaryPool" class="font-mono">₱37,325.11</span>
+        </div>
+
+        <div class="flex justify-between items-center text-slate-400 text-[11px]">
+          <span>Discretionary Spent This Month:</span>
+          <span id="monthDiscretionarySpent" class="font-mono text-slate-200">₱0.00</span>
+        </div>
+
+        <div class="flex justify-between items-center text-indigo-300 text-[11px] pt-1 border-t border-slate-800/50">
+          <span class="flex items-center gap-1">
+            <i data-lucide="gauge" class="w-3 h-3"></i> Recommended Daily Allowance:
+          </span>
+          <span id="dailyPaceDisplay" class="font-mono font-bold">₱0.00 / day</span>
+        </div>
+      </div>
+
+      <!-- Alert note if overspending -->
+      <div id="limiterAlertBadge" class="hidden p-2.5 rounded-xl text-xs font-medium border">
+        <!-- Injected dynamically -->
+      </div>
+    </div>
+
+    <!-- QUICK STATS TILES -->
+    <div class="grid grid-cols-2 gap-3">
+      <div class="p-3.5 rounded-2xl bg-slate-900 border border-slate-800">
+        <span class="text-[11px] uppercase tracking-wider text-slate-400 font-medium">Month Total Logged</span>
+        <div id="monthTotalSpendDisplay" class="text-lg font-bold font-mono text-white mt-0.5">₱0.00</div>
+        <div class="text-[10px] text-slate-500 mt-1" id="monthTxCount">0 expenses logged</div>
+      </div>
+      <div class="p-3.5 rounded-2xl bg-slate-900 border border-slate-800">
+        <span class="text-[11px] uppercase tracking-wider text-slate-400 font-medium">Fixed Bills Status</span>
+        <div id="billsStatusDisplay" class="text-xs font-bold text-emerald-400 mt-1 flex items-center gap-1">
+          <i data-lucide="check-check" class="w-3.5 h-3.5"></i> Tracked
+        </div>
+        <div class="text-[10px] text-slate-400 mt-1" id="billsBreakdownMini">Water, Power, Rent</div>
+      </div>
+    </div>
+
+    <!-- TRANSACTION FEED HEADER & SEARCH -->
+    <div class="space-y-2 pt-2">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-slate-200 flex items-center gap-1.5">
+          <i data-lucide="history" class="w-4 h-4 text-emerald-400"></i>
+          Recent Expenses
+        </h3>
+        <div class="flex gap-1.5 text-xs">
+          <button id="filterAllBtn" class="px-2.5 py-1 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-medium">All</button>
+          <button id="filterAeronBtn" class="px-2.5 py-1 rounded-xl bg-slate-800 text-slate-400 hover:text-slate-200 font-medium">Aeron</button>
+          <button id="filterNayaBtn" class="px-2.5 py-1 rounded-xl bg-slate-800 text-slate-400 hover:text-slate-200 font-medium">Naya</button>
+        </div>
+      </div>
+
+      <!-- Search & quick filter -->
+      <div class="relative">
+        <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"></i>
+        <input type="text" id="searchInput" placeholder="Search by description, category, or amount..." 
+          class="w-full bg-slate-900 border border-slate-800 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors">
+      </div>
+    </div>
+
+    <!-- TRANSACTION LIST CONTAINER -->
+    <div id="transactionList" class="space-y-2.5">
+      <!-- Injected via JS -->
+    </div>
+
+  </main>
+
+  <!-- STICKY BOTTOM QUICK ACTION BAR -->
+  <div class="fixed bottom-0 left-0 right-0 z-30 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 px-4 py-3 pb-safe">
+    <div class="max-w-md mx-auto flex items-center gap-3">
+      <button id="openAddModalBtn" class="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 active:scale-[0.98] text-slate-950 font-bold py-3.5 px-4 rounded-2xl shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all text-sm">
+        <i data-lucide="plus-circle" class="w-5 h-5"></i>
+        <span>Log Expense</span>
+      </button>
+
+      <button id="exportCsvBtn" class="p-3.5 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 rounded-2xl border border-slate-700/80 transition-all" title="Export CSV for Google Sheets">
+        <i data-lucide="download" class="w-5 h-5"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD / LOG EXPENSE -->
+  <div id="addExpenseModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-slate-900 border-t sm:border border-slate-800 rounded-t-3xl sm:rounded-3xl w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-200">
+      
+      <!-- Modal Header -->
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+            <i data-lucide="plus" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Log Purchase</h3>
+            <p class="text-[11px] text-slate-400">Save cost & auto-split share</p>
+          </div>
+        </div>
+        <button id="closeAddModalBtn" class="p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <form id="expenseForm" class="p-4 space-y-3.5 overflow-y-auto no-scrollbar flex-1 text-xs">
+        
+        <!-- Amount Input (Hero input) -->
+        <div class="space-y-1">
+          <label class="font-bold text-slate-300 uppercase tracking-wider text-[11px] flex justify-between">
+            <span>Amount (PHP) *</span>
+            <span class="text-emerald-400 font-mono text-xs">₱</span>
+          </label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-lg font-bold text-slate-400">₱</span>
+            <input type="number" step="0.01" min="0.01" id="inputAmount" required placeholder="0.00"
+              class="w-full bg-slate-950 border border-slate-700 rounded-2xl pl-9 pr-4 py-3 text-xl font-bold font-mono text-emerald-400 placeholder-slate-600 focus:outline-none focus:border-emerald-500">
+          </div>
+          <!-- Quick Amount Chips -->
+          <div class="flex gap-1.5 pt-1 overflow-x-auto no-scrollbar">
+            <button type="button" class="quick-amt-btn px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 font-mono text-[11px]" data-amt="50">+₱50</button>
+            <button type="button" class="quick-amt-btn px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 font-mono text-[11px]" data-amt="100">+₱100</button>
+            <button type="button" class="quick-amt-btn px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 font-mono text-[11px]" data-amt="250">+₱250</button>
+            <button type="button" class="quick-amt-btn px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 font-mono text-[11px]" data-amt="500">+₱500</button>
+            <button type="button" class="quick-amt-btn px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 font-mono text-[11px]" data-amt="1000">+₱1,000</button>
+          </div>
+        </div>
+
+        <!-- Description Input -->
+        <div class="space-y-1">
+          <label class="font-bold text-slate-300 uppercase tracking-wider text-[11px]">Description / Item *</label>
+          <input type="text" id="inputDescription" required placeholder="e.g. FoodPanda, Water Bill, Groceries..."
+            class="w-full bg-slate-950 border border-slate-700 rounded-2xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
+          
+          <!-- Suggested Tags -->
+          <div class="flex gap-1.5 pt-1 overflow-x-auto no-scrollbar text-[11px]">
+            <button type="button" class="quick-desc-btn px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300">Water Bill</button>
+            <button type="button" class="quick-desc-btn px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300">Electric Bill</button>
+            <button type="button" class="quick-desc-btn px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300">Rent</button>
+            <button type="button" class="quick-desc-btn px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300">Grocery</button>
+            <button type="button" class="quick-desc-btn px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300">FoodPanda</button>
+            <button type="button" class="quick-desc-btn px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300">GrabCar</button>
+            <button type="button" class="quick-desc-btn px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300">Dinner</button>
+          </div>
+        </div>
+
+        <!-- Date & Payment Category / Channel -->
+        <div class="grid grid-cols-2 gap-3">
+          <div class="space-y-1">
+            <label class="font-bold text-slate-300 uppercase tracking-wider text-[11px]">Date *</label>
+            <input type="date" id="inputDate" required
+              class="w-full bg-slate-950 border border-slate-700 rounded-2xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+          </div>
+          <div class="space-y-1">
+            <label class="font-bold text-slate-300 uppercase tracking-wider text-[11px]">Channel / Wallet</label>
+            <select id="inputCategory" class="w-full bg-slate-950 border border-slate-700 rounded-2xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+              <option value="Cash">Cash</option>
+              <option value="Maya">Maya</option>
+              <option value="Gcash">Gcash</option>
+              <option value="UB">UB (UnionBank)</option>
+              <option value="RCBC">RCBC</option>
+              <option value="EastWest">EastWest</option>
+              <option value="Maribank">Maribank</option>
+              <option value="BDO">BDO</option>
+              <option value="BPI">BPI</option>
+              <option value="General">Other / Card</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Paid By Toggle -->
+        <div class="space-y-1.5">
+          <label class="font-bold text-slate-300 uppercase tracking-wider text-[11px]">Paid By *</label>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="cursor-pointer">
+              <input type="radio" name="paidBy" value="Aeron James" checked class="peer sr-only">
+              <div class="p-2.5 rounded-2xl border border-slate-700 bg-slate-950 peer-checked:bg-blue-600/20 peer-checked:border-blue-500 peer-checked:text-blue-300 text-slate-300 text-center font-bold transition-all flex items-center justify-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-blue-400"></span> Aeron James
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="paidBy" value="Naya" class="peer sr-only">
+              <div class="p-2.5 rounded-2xl border border-slate-700 bg-slate-950 peer-checked:bg-pink-600/20 peer-checked:border-pink-500 peer-checked:text-pink-300 text-slate-300 text-center font-bold transition-all flex items-center justify-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-pink-400"></span> Naya
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Split Code Selector -->
+        <div class="space-y-1.5">
+          <label class="font-bold text-slate-300 uppercase tracking-wider text-[11px] flex justify-between">
+            <span>Split Rule (Sheet Format) *</span>
+            <span id="splitExplanation" class="text-slate-400 font-normal">50% Aeron / 50% Naya</span>
+          </label>
+          <div class="grid grid-cols-3 gap-2">
+            <label class="cursor-pointer">
+              <input type="radio" name="splitCode" value="C" checked class="peer sr-only">
+              <div class="p-2 rounded-xl border border-slate-700 bg-slate-950 peer-checked:bg-emerald-500/20 peer-checked:border-emerald-500 peer-checked:text-emerald-300 text-slate-300 text-center font-bold transition-all">
+                <div class="text-xs">Code C</div>
+                <div class="text-[10px] text-slate-400 font-normal">50 / 50 Split</div>
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="splitCode" value="A" class="peer sr-only">
+              <div class="p-2 rounded-xl border border-slate-700 bg-slate-950 peer-checked:bg-blue-500/20 peer-checked:border-blue-500 peer-checked:text-blue-300 text-slate-300 text-center font-bold transition-all">
+                <div class="text-xs">Code A</div>
+                <div class="text-[10px] text-slate-400 font-normal">Aeron 100%</div>
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="splitCode" value="B" class="peer sr-only">
+              <div class="p-2 rounded-xl border border-slate-700 bg-slate-950 peer-checked:bg-pink-500/20 peer-checked:border-pink-500 peer-checked:text-pink-300 text-slate-300 text-center font-bold transition-all">
+                <div class="text-xs">Code B</div>
+                <div class="text-[10px] text-slate-400 font-normal">Naya 100%</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Remarks (Optional) -->
+        <div class="space-y-1">
+          <label class="font-bold text-slate-300 uppercase tracking-wider text-[11px]">Remarks (Optional)</label>
+          <input type="text" id="inputRemarks" placeholder="Notes, specific split details, etc."
+            class="w-full bg-slate-950 border border-slate-700 rounded-2xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
+        </div>
+
+        <!-- Submit Button -->
+        <div class="pt-2">
+          <button type="submit" id="saveExpenseBtn" class="w-full bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] text-slate-950 font-extrabold py-3.5 px-4 rounded-2xl shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2 text-sm transition-all">
+            <i data-lucide="check" class="w-5 h-5"></i>
+            <span>Save Purchase</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: CONFIGURE BUDGET LIMITER & BILLS -->
+  <div id="budgetModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+            <i data-lucide="sliders" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Monthly Limiter & Set Bills</h3>
+            <p class="text-[11px] text-slate-400">Lock fixed bills so you cannot overspend</p>
+          </div>
+        </div>
+        <button id="closeBudgetModalBtn" class="p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="p-4 space-y-4 overflow-y-auto no-scrollbar text-xs">
+        
+        <!-- Explanation Box -->
+        <div class="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-3 text-amber-300 space-y-1">
+          <div class="font-bold flex items-center gap-1.5 text-xs">
+            <i data-lucide="info" class="w-4 h-4"></i> How the Limiter Works:
+          </div>
+          <p class="text-[11px] text-amber-200/90 leading-relaxed">
+            Your Monthly Spending Limit is reduced by your <strong>Set Fixed Bills</strong> (Rent, Electric, and Water). The remaining balance is your <strong>Safe-to-Spend Pool</strong> for dining, groceries, and personal items.
+          </p>
+        </div>
+
+        <!-- Total Monthly Limit Input -->
+        <div class="space-y-1">
+          <label class="font-bold text-slate-300 uppercase tracking-wider text-[11px]">Total Monthly Budget Limit (₱)</label>
+          <input type="number" id="cfgBudgetLimitInput" step="100" class="w-full bg-slate-950 border border-slate-700 rounded-2xl px-3.5 py-2.5 text-sm font-bold font-mono text-emerald-400 focus:outline-none focus:border-emerald-500">
+        </div>
+
+        <!-- Fixed Bills Section -->
+        <div class="space-y-2 pt-2 border-t border-slate-800">
+          <span class="font-bold text-slate-300 uppercase tracking-wider text-[11px] flex items-center gap-1">
+            <i data-lucide="home" class="w-3.5 h-3.5 text-indigo-400"></i> Set Bills Deducted Automatically:
+          </span>
+          
+          <div class="grid grid-cols-1 gap-2.5">
+            <div class="flex items-center justify-between p-2.5 rounded-2xl bg-slate-950 border border-slate-800">
+              <span class="font-medium text-slate-300">🏢 Rent (Monthly):</span>
+              <div class="flex items-center gap-1">
+                <span class="text-slate-500">₱</span>
+                <input type="number" id="cfgRentInput" class="w-24 bg-slate-900 border border-slate-700 rounded-xl px-2 py-1 text-right font-mono text-slate-200">
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between p-2.5 rounded-2xl bg-slate-950 border border-slate-800">
+              <span class="font-medium text-slate-300">⚡ Electric Bill (Est/Actual):</span>
+              <div class="flex items-center gap-1">
+                <span class="text-slate-500">₱</span>
+                <input type="number" id="cfgElectricInput" class="w-24 bg-slate-900 border border-slate-700 rounded-xl px-2 py-1 text-right font-mono text-slate-200">
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between p-2.5 rounded-2xl bg-slate-950 border border-slate-800">
+              <span class="font-medium text-slate-300">💧 Water Bill (Est/Actual):</span>
+              <div class="flex items-center gap-1">
+                <span class="text-slate-500">₱</span>
+                <input type="number" id="cfgWaterInput" class="w-24 bg-slate-900 border border-slate-700 rounded-xl px-2 py-1 text-right font-mono text-slate-200">
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between p-2.5 rounded-2xl bg-slate-950 border border-slate-800">
+              <span class="font-medium text-slate-300">📶 Other Bills (Wi-Fi/PLDT):</span>
+              <div class="flex items-center gap-1">
+                <span class="text-slate-500">₱</span>
+                <input type="number" id="cfgOtherBillsInput" class="w-24 bg-slate-900 border border-slate-700 rounded-xl px-2 py-1 text-right font-mono text-slate-200">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button id="saveBudgetSettingsBtn" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3 rounded-2xl text-xs transition-all shadow-lg shadow-emerald-500/20">
+          Save Limiter Settings
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: SETTINGS, EMAIL REMINDER & GOOGLE SYNC -->
+  <div id="settingsModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center">
+            <i data-lucide="settings" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Sync & Daily Reminder</h3>
+            <p class="text-[11px] text-slate-400">9:00 PM PHT Email & Google Sheets</p>
+          </div>
+        </div>
+        <button id="closeSettingsModalBtn" class="p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="p-4 space-y-4 overflow-y-auto no-scrollbar text-xs">
+        
+        <!-- Daily 9:00 PM Email Reminder Card -->
+        <div class="bg-slate-950 rounded-2xl p-3.5 border border-slate-800 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-200 flex items-center gap-1.5 text-xs">
+              <i data-lucide="bell" class="w-4 h-4 text-emerald-400"></i>
+              Daily 9:00 PM PH Time Reminder
+            </span>
+            <span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/20">Active</span>
+          </div>
+          <p class="text-slate-400 text-[11px] leading-relaxed">
+            Every night at 9:00 PM (Manila Time), Google Apps Script triggers an automated reminder to log all daily expenses into this tracker.
+          </p>
+
+          <div class="space-y-1">
+            <label class="text-slate-300 font-medium text-[11px]">Reminder Email(s):</label>
+            <input type="text" id="cfgEmailRecipients" placeholder="aeron@example.com, naya@example.com"
+              class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white">
+          </div>
+
+          <button id="testEmailReminderBtn" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl border border-slate-700 flex items-center justify-center gap-1.5">
+            <i data-lucide="send" class="w-3.5 h-3.5 text-blue-400"></i> Send Test Reminder Now
+          </button>
+        </div>
+
+        <!-- Google Apps Script Web App Integration -->
+        <div class="bg-slate-950 rounded-2xl p-3.5 border border-slate-800 space-y-2">
+          <span class="font-bold text-slate-200 flex items-center gap-1.5 text-xs">
+            <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-400"></i>
+            Google Sheets Web App URL
+          </span>
+          <p class="text-slate-400 text-[11px]">
+            Paste your Google Apps Script Web App URL below so purchases instantly append to your live Google Sheet:
+          </p>
+          <input type="url" id="cfgGoogleScriptUrl" placeholder="https://script.google.com/macros/s/.../exec"
+            class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-300">
+        </div>
+
+        <!-- Phone Home Screen Guide -->
+        <div class="bg-indigo-950/30 border border-indigo-800/40 rounded-2xl p-3.5 text-indigo-300 space-y-1.5">
+          <div class="font-bold flex items-center gap-1.5 text-xs text-indigo-200">
+            <i data-lucide="smartphone" class="w-4 h-4 text-indigo-400"></i> Add to Phone Home Screen (1-Tap Access):
+          </div>
+          <ul class="text-[11px] text-slate-300 list-disc list-inside space-y-1">
+            <li><strong>iPhone (Safari):</strong> Tap the <span class="text-indigo-400 font-semibold">Share</span> icon &rarr; Select <span class="text-indigo-400 font-semibold">"Add to Home Screen"</span>.</li>
+            <li><strong>Android (Chrome):</strong> Tap the 3 dots menu &rarr; Select <span class="text-indigo-400 font-semibold">"Add to Home screen"</span> or "Install app".</li>
+          </ul>
+        </div>
+
+        <!-- Backup & Reset -->
+        <div class="pt-2 border-t border-slate-800 flex gap-2">
+          <button id="backupJsonBtn" class="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl border border-slate-700">
+            Backup JSON
+          </button>
+          <button id="resetSampleDataBtn" class="flex-1 py-2 bg-red-950/40 hover:bg-red-900/40 text-red-400 rounded-xl border border-red-900/50">
+            Reset Data
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // Default Storage Keys
+    const STORAGE_KEY = 'aeron_naya_budget_transactions_v2';
+    const CONFIG_KEY = 'aeron_naya_budget_config_v2';
+
+    // Default Budget Configuration
+    const defaultConfig = {
+      monthlyBudget: 60000,
+      rent: 16000,
+      electric: 5500,
+      water: 1200,
+      otherBills: 999, // e.g. PLDT
+      emails: 'aeron@example.com, naya@example.com',
+      scriptUrl: ''
+    };
+
+    // Load or initialize config
+    let appConfig = JSON.parse(localStorage.getItem(CONFIG_KEY)) || defaultConfig;
+
+    // Load or initialize transactions
+    const EMBEDDED_INITIAL_DATA = [
+  {
+    "date": "09/30/26",
+    "description": "Ma Dao",
+    "category": "General",
+    "amount": 270,
+    "paidBy": "Aeron James",
+    "splitCode": "A",
+    "ratio": "",
+    "aeronShare": 270,
+    "nayaShare": 0,
+    "remarks": ""
+  },
+  {
+    "date": "09/30/26",
+    "description": "Burger King",
+    "category": "General",
+    "amount": 517,
+    "paidBy": "Aeron James",
+    "splitCode": "A",
+    "ratio": "",
+    "aeronShare": 517,
+    "nayaShare": 0,
+    "remarks": ""
+  },
+  {
+    "date": "09/30/26",
+    "description": "HeyDay",
+    "category": "General",
+    "amount": 929.39,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 464.695,
+    "nayaShare": 464.695,
+    "remarks": ""
+  },
+  {
+    "date": "09/30/26",
+    "description": "JD Store",
+    "category": "General",
+    "amount": 3200,
+    "paidBy": "Aeron James",
+    "splitCode": "A",
+    "ratio": "",
+    "aeronShare": 3200,
+    "nayaShare": 0,
+    "remarks": ""
+  },
+  {
+    "date": "10/01/26",
+    "description": "Water Bill (September)",
+    "category": "General",
+    "amount": 1115,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 557.5,
+    "nayaShare": 557.5,
+    "remarks": ""
+  },
+  {
+    "date": "10/01/26",
+    "description": "Electric Bill (September)",
+    "category": "General",
+    "amount": 5559.89,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 2779.945,
+    "nayaShare": 2779.945,
+    "remarks": ""
+  },
+  {
+    "date": "10/01/26",
+    "description": "Rent",
+    "category": "General",
+    "amount": 16000,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 8000,
+    "nayaShare": 8000,
+    "remarks": ""
+  },
+  {
+    "date": "10/01/26",
+    "description": "Transfer",
+    "category": "General",
+    "amount": 13000,
+    "paidBy": "Naya",
+    "splitCode": "A",
+    "ratio": "",
+    "aeronShare": 13000,
+    "nayaShare": 0,
+    "remarks": ""
+  },
+  {
+    "date": "10/01/26",
+    "description": "Balance",
+    "category": "General",
+    "amount": 600,
+    "paidBy": "Naya",
+    "splitCode": "A",
+    "ratio": "",
+    "aeronShare": 600,
+    "nayaShare": 0,
+    "remarks": ""
+  },
+  {
+    "date": "10/01/26",
+    "description": "Installment (Phone)",
+    "category": "General",
+    "amount": 2500,
+    "paidBy": "Aeron James",
+    "splitCode": "B",
+    "ratio": "",
+    "aeronShare": 0,
+    "nayaShare": 2500,
+    "remarks": ""
+  },
+  {
+    "date": "10/01/26",
+    "description": "PLDT Application",
+    "category": "General",
+    "amount": 999,
+    "paidBy": "Aeron James",
+    "splitCode": "A",
+    "ratio": "",
+    "aeronShare": 999,
+    "nayaShare": 0,
+    "remarks": ""
+  },
+  {
+    "date": "10/02/26",
+    "description": "Dinner (Chowking + DECS)",
+    "category": "General",
+    "amount": 493,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 246.5,
+    "nayaShare": 246.5,
+    "remarks": ""
+  },
+  {
+    "date": "10/03/26",
+    "description": "Lunch",
+    "category": "General",
+    "amount": 125,
+    "paidBy": "Aeron James",
+    "splitCode": "A",
+    "ratio": "",
+    "aeronShare": 125,
+    "nayaShare": 0,
+    "remarks": ""
+  },
+  {
+    "date": "10/04/26",
+    "description": "Dinner (Bacsilog, Dairy Queen)",
+    "category": "General",
+    "amount": 538,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 269,
+    "nayaShare": 269,
+    "remarks": ""
+  },
+  {
+    "date": "10/04/26",
+    "description": "Grocery",
+    "category": "General",
+    "amount": 6145.39,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 3072.695,
+    "nayaShare": 3072.695,
+    "remarks": ""
+  },
+  {
+    "date": "10/07/26",
+    "description": "Steam Wallet",
+    "category": "General",
+    "amount": 2000,
+    "paidBy": "Aeron James",
+    "splitCode": "A",
+    "ratio": "",
+    "aeronShare": 2000,
+    "nayaShare": 0,
+    "remarks": ""
+  },
+  {
+    "date": "10/08/26",
+    "description": "Dinner (Sinigang)",
+    "category": "General",
+    "amount": 320,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 160,
+    "nayaShare": 160,
+    "remarks": ""
+  },
+  {
+    "date": "10/11/26",
+    "description": "Kapecon",
+    "category": "General",
+    "amount": 970,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 485,
+    "nayaShare": 485,
+    "remarks": "Date"
+  },
+  {
+    "date": "10/12/26",
+    "description": "Zus Coffee",
+    "category": "Maya",
+    "amount": 240,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 120,
+    "nayaShare": 120,
+    "remarks": "Date"
+  },
+  {
+    "date": "10/14/26",
+    "description": "FoodPanda - On The Way",
+    "category": "UB",
+    "amount": 290.25,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 145.125,
+    "nayaShare": 145.125,
+    "remarks": ""
+  },
+  {
+    "date": "10/16/26",
+    "description": "FoodPanda - (Wendys + KFC)",
+    "category": "UB",
+    "amount": 420.63,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 210.315,
+    "nayaShare": 210.315,
+    "remarks": ""
+  },
+  {
+    "date": "10/17/26",
+    "description": "Laundry",
+    "category": "Maribank",
+    "amount": 220,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 110,
+    "nayaShare": 110,
+    "remarks": ""
+  },
+  {
+    "date": "10/17/26",
+    "description": "7-Eleven",
+    "category": "Maya",
+    "amount": 229,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 114.5,
+    "nayaShare": 114.5,
+    "remarks": ""
+  },
+  {
+    "date": "10/17/26",
+    "description": "Grab Carpool w/ Nikko",
+    "category": "Gcash",
+    "amount": 250,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 125,
+    "nayaShare": 125,
+    "remarks": ""
+  },
+  {
+    "date": "10/18/26",
+    "description": "Watsons (Betadine)",
+    "category": "Maya",
+    "amount": 515.25,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 257.625,
+    "nayaShare": 257.625,
+    "remarks": ""
+  },
+  {
+    "date": "10/20/26",
+    "description": "FoodPanda - (Robinsons Supermarket)",
+    "category": "UB",
+    "amount": 1067,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 533.5,
+    "nayaShare": 533.5,
+    "remarks": ""
+  },
+  {
+    "date": "10/20/26",
+    "description": "Robinsons Metropoint Grocery",
+    "category": "RCBC",
+    "amount": 974.64,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 487.32,
+    "nayaShare": 487.32,
+    "remarks": ""
+  },
+  {
+    "date": "10/21/26",
+    "description": "FoodPanda - (Chowking)",
+    "category": "UB",
+    "amount": 284.38,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 142.19,
+    "nayaShare": 142.19,
+    "remarks": ""
+  },
+  {
+    "date": "10/22/26",
+    "description": "FoodPanda - (Chowking)",
+    "category": "UB",
+    "amount": 188.5,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 94.25,
+    "nayaShare": 94.25,
+    "remarks": ""
+  },
+  {
+    "date": "10/23/26",
+    "description": "FoodPanda - (Popeyes)",
+    "category": "UB",
+    "amount": 423.25,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 211.625,
+    "nayaShare": 211.625,
+    "remarks": ""
+  },
+  {
+    "date": "10/24/26",
+    "description": "Robinsons Magnolia (Food)",
+    "category": "RCBC",
+    "amount": 916.61,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 458.305,
+    "nayaShare": 458.305,
+    "remarks": ""
+  },
+  {
+    "date": "10/24/26",
+    "description": "Reese Merch",
+    "category": "Gcash",
+    "amount": 4650,
+    "paidBy": "Aeron James",
+    "splitCode": "B",
+    "ratio": "",
+    "aeronShare": 0,
+    "nayaShare": 4650,
+    "remarks": ""
+  },
+  {
+    "date": "10/25/26",
+    "description": "Koolchella Food + Transpo",
+    "category": "Cash",
+    "amount": 1000,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 500,
+    "nayaShare": 500,
+    "remarks": ""
+  },
+  {
+    "date": "10/28/26",
+    "description": "Robinsons Metropoint Grocery",
+    "category": "RCBC",
+    "amount": 1231.5,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 615.75,
+    "nayaShare": 615.75,
+    "remarks": ""
+  },
+  {
+    "date": "10/28/26",
+    "description": "Cash/Allowance",
+    "category": "Cash",
+    "amount": 500,
+    "paidBy": "Aeron James",
+    "splitCode": "B",
+    "ratio": "",
+    "aeronShare": 0,
+    "nayaShare": 500,
+    "remarks": ""
+  },
+  {
+    "date": "10/28/26",
+    "description": "Jollibee (Dinner)",
+    "category": "RCBC",
+    "amount": 438,
+    "paidBy": "Aeron James",
+    "splitCode": "B",
+    "ratio": "",
+    "aeronShare": 0,
+    "nayaShare": 438,
+    "remarks": ""
+  },
+  {
+    "date": "10/29/26",
+    "description": "Electric Bill (October)",
+    "category": "Cash",
+    "amount": 6285.94,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 3142.97,
+    "nayaShare": 3142.97,
+    "remarks": ""
+  },
+  {
+    "date": "10/29/26",
+    "description": "Water Bill (October)",
+    "category": "Cash",
+    "amount": 1440,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 720,
+    "nayaShare": 720,
+    "remarks": ""
+  },
+  {
+    "date": "10/31/26",
+    "description": "Army Navy (Waltermart)",
+    "category": "UB",
+    "amount": 457.5,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 228.75,
+    "nayaShare": 228.75,
+    "remarks": ""
+  },
+  {
+    "date": "10/31/26",
+    "description": "Kyukyu Ramen (Waltermart)",
+    "category": "RCBC",
+    "amount": 308,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 154,
+    "nayaShare": 154,
+    "remarks": ""
+  },
+  {
+    "date": "10/31/26",
+    "description": "A Cup for Lola",
+    "category": "Gcash / Maribank",
+    "amount": 640,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 320,
+    "nayaShare": 320,
+    "remarks": ""
+  },
+  {
+    "date": "10/31/26",
+    "description": "Green GSM",
+    "category": "Maribank",
+    "amount": 640,
+    "paidBy": "Aeron James",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 320,
+    "nayaShare": 320,
+    "remarks": ""
+  },
+  {
+    "date": "09/10/26",
+    "description": "FoodPanda - Paotsin",
+    "category": "EastWest",
+    "amount": 348.75,
+    "paidBy": "Naya",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 174.375,
+    "nayaShare": 174.375,
+    "remarks": ""
+  },
+  {
+    "date": "09/21/26",
+    "description": "FoodPanda - Zus",
+    "category": "EastWest",
+    "amount": 224.92,
+    "paidBy": "Naya",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 112.46,
+    "nayaShare": 112.46,
+    "remarks": ""
+  },
+  {
+    "date": "09/21/26",
+    "description": "FoodPanda - Mang Inasal",
+    "category": "EastWest",
+    "amount": 442.5,
+    "paidBy": "Naya",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 221.25,
+    "nayaShare": 221.25,
+    "remarks": ""
+  },
+  {
+    "date": "09/24/26",
+    "description": "FoodPanda - Bulalo World",
+    "category": "EastWest",
+    "amount": 192.5,
+    "paidBy": "Naya",
+    "splitCode": "A",
+    "ratio": "",
+    "aeronShare": 192.5,
+    "nayaShare": 0,
+    "remarks": ""
+  },
+  {
+    "date": "10/12/26",
+    "description": "FoodPanda - Paotsin",
+    "category": "EastWest",
+    "amount": 110,
+    "paidBy": "Naya",
+    "splitCode": "A",
+    "ratio": "",
+    "aeronShare": 110,
+    "nayaShare": 0,
+    "remarks": ""
+  },
+  {
+    "date": "10/19/26",
+    "description": "FoodPanda - Starbucks",
+    "category": "EastWest",
+    "amount": 664.5,
+    "paidBy": "Naya",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 332.25,
+    "nayaShare": 332.25,
+    "remarks": ""
+  },
+  {
+    "date": "10/26/26",
+    "description": "FoodPanda - Giligans",
+    "category": "EastWest",
+    "amount": 628.15,
+    "paidBy": "Naya",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 314.075,
+    "nayaShare": 314.075,
+    "remarks": ""
+  },
+  {
+    "date": "09/02/26",
+    "description": "GrabFood - BOK",
+    "category": "EastWest",
+    "amount": 558,
+    "paidBy": "Naya",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 279,
+    "nayaShare": 279,
+    "remarks": ""
+  },
+  {
+    "date": "09/12/26",
+    "description": "GrabFood - BOK",
+    "category": "EastWest",
+    "amount": 567,
+    "paidBy": "Naya",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 283.5,
+    "nayaShare": 283.5,
+    "remarks": ""
+  },
+  {
+    "date": "10/24/26",
+    "description": "GrabCar - QC - ROB Mag",
+    "category": "EastWest",
+    "amount": 185,
+    "paidBy": "Naya",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 92.5,
+    "nayaShare": 92.5,
+    "remarks": ""
+  },
+  {
+    "date": "10/27/26",
+    "description": "GrabFood - Why Chicken",
+    "category": "EastWest",
+    "amount": 578,
+    "paidBy": "Naya",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 289,
+    "nayaShare": 289,
+    "remarks": ""
+  },
+  {
+    "date": "11/03/26",
+    "description": "GrabCar - T3 - Solitaria",
+    "category": "EastWest",
+    "amount": 200,
+    "paidBy": "Naya",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 100,
+    "nayaShare": 100,
+    "remarks": ""
+  },
+  {
+    "date": "09/17/26",
+    "description": "Rob Groceries",
+    "category": "EastWest",
+    "amount": 1433,
+    "paidBy": "Naya",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 716.5,
+    "nayaShare": 716.5,
+    "remarks": ""
+  },
+  {
+    "date": "09/21/26",
+    "description": "Robinsons Groceries",
+    "category": "EastWest",
+    "amount": 206,
+    "paidBy": "Naya",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 103,
+    "nayaShare": 103,
+    "remarks": ""
+  },
+  {
+    "date": "11/05/26",
+    "description": "Pasabuy (Coffee + Candy)",
+    "category": "Maribank",
+    "amount": 678,
+    "paidBy": "Naya",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 339,
+    "nayaShare": 339,
+    "remarks": ""
+  },
+  {
+    "date": "10/10/26",
+    "description": "Shopee (House Stuff)",
+    "category": "Maribank",
+    "amount": 813,
+    "paidBy": "Naya",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 406.5,
+    "nayaShare": 406.5,
+    "remarks": ""
+  },
+  {
+    "date": "11/15/26",
+    "description": "Coffee Shop - Bulacan",
+    "category": "Maribank",
+    "amount": 602,
+    "paidBy": "Naya",
+    "splitCode": "C",
+    "ratio": "",
+    "aeronShare": 301,
+    "nayaShare": 301,
+    "remarks": ""
+  }
+];
+    let transactions = JSON.parse(localStorage.getItem(STORAGE_KEY)) || EMBEDDED_INITIAL_DATA;
+
+    // Current active filter
+    let activePayerFilter = 'All';
+    let activeMonthFilter = '';
+
+    // Initialize Date Defaults (Today)
+    const today = new Date();
+    const todayIso = today.toISOString().split('T')[0];
+    document.getElementById('inputDate').value = todayIso;
+    document.getElementById('currentDateDisplay').textContent = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+    // Format Currency Helper
+    function formatPHP(amount) {
+      return '₱' + (Number(amount) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // Parse transaction date string (supports MM/DD/YY, YYYY-MM-DD, etc.)
+    function parseTxDate(dateStr) {
+      if (!dateStr) return new Date();
+      if (dateStr.includes('-')) {
+        const [y, m, d] = dateStr.split('-');
+        return new Date(y, m - 1, d);
+      }
+      if (dateStr.includes('/')) {
+        const parts = dateStr.split('/');
+        let m = parseInt(parts[0], 10);
+        let d = parseInt(parts[1], 10);
+        let y = parseInt(parts[2], 10);
+        if (y < 100) y += 2000;
+        return new Date(y, m - 1, d);
+      }
+      return new Date(dateStr);
+    }
+
+    // Format date for display
+    function formatDisplayDate(dateStr) {
+      const d = parseTxDate(dateStr);
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    // Save transactions to LocalStorage
+    function saveTransactions() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+      renderAll();
+    }
+
+    // Populate Months Dropdown
+    function populateMonthDropdown() {
+      const monthSelect = document.getElementById('monthFilterSelect');
+      const monthsSet = new Set();
+      
+      // Add current month first
+      const currentMonthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+      monthsSet.add(currentMonthKey);
+
+      transactions.forEach(t => {
+        const d = parseTxDate(t.date);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        monthsSet.add(key);
+      });
+
+      const sortedMonths = Array.from(monthsSet).sort().reverse();
+      monthSelect.innerHTML = sortedMonths.map(key => {
+        const [y, m] = key.split('-');
+        const d = new Date(y, m - 1, 1);
+        const label = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        return `<option value="${key}">${label}</option>`;
+      }).join('');
+
+      if (!activeMonthFilter || !monthsSet.has(activeMonthFilter)) {
+        activeMonthFilter = sortedMonths[0];
+      }
+      monthSelect.value = activeMonthFilter;
+    }
+
+    // Calculate Split shares based on code
+    function calculateShares(totalAmount, paidBy, splitCode) {
+      const total = Number(totalAmount) || 0;
+      let aeronShare = 0;
+      let nayaShare = 0;
+
+      if (splitCode === 'A') {
+        // Code A: Aeron pays 100%
+        aeronShare = total;
+        nayaShare = 0;
+      } else if (splitCode === 'B') {
+        // Code B: Naya pays 100%
+        aeronShare = 0;
+        nayaShare = total;
+      } else {
+        // Code C: 50 / 50 split
+        aeronShare = total / 2;
+        nayaShare = total / 2;
+      }
+
+      return { aeronShare, nayaShare };
+    }
+
+    // Is an item a Set Bill (Rent, Electric, Water)?
+    function isSetBill(desc) {
+      const s = (desc || '').toLowerCase();
+      return s.includes('water bill') || s.includes('electric bill') || s.includes('rent');
+    }
+
+    // Render Metrics, Limiter & Balances
+    function renderMetrics() {
+      // 1. Overall Balance across ALL transactions (Cumulative Sheet Settlement)
+      let aeronSpentTotal = 0;
+      let aeronTrueShareTotal = 0;
+      let nayaSpentTotal = 0;
+      let nayaTrueShareTotal = 0;
+
+      transactions.forEach(t => {
+        const amt = Number(t.amount) || 0;
+        const aShare = Number(t.aeronShare) || 0;
+        const nShare = Number(t.nayaShare) || 0;
+
+        if (t.paidBy === 'Aeron James') {
+          aeronSpentTotal += amt;
+        } else if (t.paidBy === 'Naya') {
+          nayaSpentTotal += amt;
+        }
+
+        aeronTrueShareTotal += aShare;
+        nayaTrueShareTotal += nShare;
+      });
+
+      document.getElementById('aeronSpentDisplay').textContent = formatPHP(aeronSpentTotal);
+      document.getElementById('aeronShareDisplay').textContent = formatPHP(aeronTrueShareTotal);
+      document.getElementById('nayaSpentDisplay').textContent = formatPHP(nayaSpentTotal);
+      document.getElementById('nayaShareDisplay').textContent = formatPHP(nayaTrueShareTotal);
+
+      // Settlement difference
+      // If Aeron spent more than his true share, Naya owes Aeron: (Aeron Spent - Aeron Share)
+      const aeronNet = aeronSpentTotal - aeronTrueShareTotal;
+      const settlementText = document.getElementById('settlementText');
+
+      if (Math.abs(aeronNet) < 0.5) {
+        settlementText.textContent = "All squared up! Nobody owes anything.";
+        settlementText.className = "text-emerald-400 font-bold";
+      } else if (aeronNet > 0) {
+        settlementText.textContent = `Naya owes Aeron James ${formatPHP(aeronNet)}`;
+        settlementText.className = "text-emerald-300 font-bold";
+      } else {
+        settlementText.textContent = `Aeron James owes Naya ${formatPHP(Math.abs(aeronNet))}`;
+        settlementText.className = "text-pink-300 font-bold";
+      }
+
+      // 2. Month Limiter Calculations
+      const [selYear, selMonth] = (activeMonthFilter || `${today.getFullYear()}-${today.getMonth() + 1}`).split('-');
+      const monthTx = transactions.filter(t => {
+        const d = parseTxDate(t.date);
+        return d.getFullYear() == selYear && (d.getMonth() + 1) == selMonth;
+      });
+
+      let monthTotalSpend = 0;
+      let monthDiscretionarySpend = 0;
+      let monthFixedBillsSpend = 0;
+
+      monthTx.forEach(t => {
+        const amt = Number(t.amount) || 0;
+        monthTotalSpend += amt;
+        if (isSetBill(t.description)) {
+          monthFixedBillsSpend += amt;
+        } else {
+          monthDiscretionarySpend += amt;
+        }
+      });
+
+      // Config values
+      const totalBudget = Number(appConfig.monthlyBudget) || 60000;
+      const fixedBillsReserved = (Number(appConfig.rent) || 0) + (Number(appConfig.electric) || 0) + (Number(appConfig.water) || 0) + (Number(appConfig.otherBills) || 0);
+      const discretionaryPool = Math.max(0, totalBudget - fixedBillsReserved);
+      const discretionaryRemaining = discretionaryPool - monthDiscretionarySpend;
+
+      // Update UI elements
+      document.getElementById('cfgTotalBudget').textContent = formatPHP(totalBudget);
+      document.getElementById('cfgFixedBillsTotal').textContent = '-' + formatPHP(fixedBillsReserved);
+      document.getElementById('cfgDiscretionaryPool').textContent = formatPHP(discretionaryPool);
+      document.getElementById('monthDiscretionarySpent').textContent = formatPHP(monthDiscretionarySpend);
+      document.getElementById('monthTotalSpendDisplay').textContent = formatPHP(monthTotalSpend);
+      document.getElementById('monthTxCount').textContent = `${monthTx.length} expenses in this period`;
+
+      // Safe to spend left display
+      const remainingElem = document.getElementById('discretionaryRemainingDisplay');
+      remainingElem.textContent = formatPHP(discretionaryRemaining) + ' Left';
+
+      // Daily Allowance calculation
+      const now = new Date();
+      const isCurrentMonth = (now.getFullYear() == selYear && (now.getMonth() + 1) == selMonth);
+      const daysInMonth = new Date(selYear, selMonth, 0).getDate();
+      const currentDay = isCurrentMonth ? now.getDate() : daysInMonth;
+      const daysRemaining = Math.max(1, daysInMonth - currentDay + 1);
+      
+      const dailyAllowance = Math.max(0, discretionaryRemaining / daysRemaining);
+      document.getElementById('dailyPaceDisplay').textContent = `${formatPHP(dailyAllowance)} / day (${daysRemaining}d left)`;
+
+      // Progress bar percentage
+      const percentUsed = discretionaryPool > 0 ? Math.min(100, (monthDiscretionarySpend / discretionaryPool) * 100) : 100;
+      const progressBar = document.getElementById('limiterProgressBar');
+      const percentDisplay = document.getElementById('limiterPercentDisplay');
+      const alertBadge = document.getElementById('limiterAlertBadge');
+
+      progressBar.style.width = `${percentUsed}%`;
+      percentDisplay.textContent = `${Math.round(percentUsed)}%`;
+
+      if (discretionaryRemaining < 0) {
+        remainingElem.className = "text-lg font-extrabold text-red-400";
+        percentDisplay.className = "font-mono font-bold text-red-400";
+        progressBar.className = "h-full rounded-full bg-red-500 transition-all duration-500 animate-pulse";
+        alertBadge.className = "p-2.5 rounded-xl text-xs font-semibold bg-red-500/10 border-red-500/30 text-red-400 flex items-center gap-1.5";
+        alertBadge.innerHTML = `<i data-lucide="alert-octagon" class="w-4 h-4 text-red-400"></i> OVERSPENT! Exceeded discretionary pool by ${formatPHP(Math.abs(discretionaryRemaining))}`;
+        alertBadge.classList.remove('hidden');
+      } else if (percentUsed > 85) {
+        remainingElem.className = "text-lg font-extrabold text-amber-400";
+        percentDisplay.className = "font-mono font-bold text-amber-400";
+        progressBar.className = "h-full rounded-full bg-amber-500 transition-all duration-500";
+        alertBadge.className = "p-2.5 rounded-xl text-xs font-medium bg-amber-500/10 border-amber-500/30 text-amber-300 flex items-center gap-1.5";
+        alertBadge.innerHTML = `<i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i> Warning: Over 85% of safe discretionary budget used!`;
+        alertBadge.classList.remove('hidden');
+      } else {
+        remainingElem.className = "text-lg font-extrabold text-emerald-400";
+        percentDisplay.className = "font-mono font-bold text-emerald-400";
+        progressBar.className = "h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-500";
+        alertBadge.classList.add('hidden');
+      }
+
+      lucide.createIcons();
+    }
+
+    // Render Transaction List
+    function renderTransactions() {
+      const listContainer = document.getElementById('transactionList');
+      const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
+
+      // Filter by Month
+      const [selYear, selMonth] = (activeMonthFilter || `${today.getFullYear()}-${today.getMonth() + 1}`).split('-');
+      
+      let filtered = transactions.filter(t => {
+        const d = parseTxDate(t.date);
+        const matchMonth = d.getFullYear() == selYear && (d.getMonth() + 1) == selMonth;
+        return matchMonth;
+      });
+
+      // Filter by Payer
+      if (activePayerFilter !== 'All') {
+        filtered = filtered.filter(t => t.paidBy === activePayerFilter);
+      }
+
+      // Filter by Search Term
+      if (searchTerm) {
+        filtered = filtered.filter(t => 
+          (t.description || '').toLowerCase().includes(searchTerm) ||
+          (t.category || '').toLowerCase().includes(searchTerm) ||
+          (t.remarks || '').toLowerCase().includes(searchTerm) ||
+          String(t.amount).includes(searchTerm)
+        );
+      }
+
+      // Sort newest date first
+      filtered.sort((a, b) => parseTxDate(b.date) - parseTxDate(a.date));
+
+      if (filtered.length === 0) {
+        listContainer.innerHTML = `
+          <div class="p-8 text-center rounded-3xl bg-slate-900/40 border border-slate-800 space-y-2">
+            <div class="w-12 h-12 rounded-2xl bg-slate-800 text-slate-500 flex items-center justify-center mx-auto">
+              <i data-lucide="inbox" class="w-6 h-6"></i>
+            </div>
+            <p class="text-xs text-slate-400 font-medium">No expenses found for this selection.</p>
+            <button onclick="document.getElementById('openAddModalBtn').click()" class="text-xs text-emerald-400 font-bold hover:underline">
+              + Log an expense now
+            </button>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      listContainer.innerHTML = filtered.map((t, idx) => {
+        const isAeron = t.paidBy === 'Aeron James';
+        const isBill = isSetBill(t.description);
+
+        // Split badge text
+        let splitBadge = '50/50';
+        let splitBadgeClass = 'bg-slate-800 text-slate-300 border-slate-700';
+        if (t.splitCode === 'A') {
+          splitBadge = 'Aeron 100%';
+          splitBadgeClass = 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+        } else if (t.splitCode === 'B') {
+          splitBadge = 'Naya 100%';
+          splitBadgeClass = 'bg-pink-500/10 text-pink-400 border-pink-500/20';
+        }
+
+        return `
+          <div class="group p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800/80 hover:border-slate-700 transition-all flex items-center justify-between gap-3 shadow-sm">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-10 h-10 rounded-2xl ${isAeron ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-pink-500/10 text-pink-400 border border-pink-500/20'} flex items-center justify-center shrink-0 font-bold text-xs">
+                ${isAeron ? 'AJ' : 'NY'}
+              </div>
+
+              <div class="min-w-0 space-y-0.5">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <h4 class="text-xs font-bold text-slate-100 truncate">${t.description || 'Expense'}</h4>
+                  ${isBill ? '<span class="text-[9px] font-semibold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">Set Bill</span>' : ''}
+                </div>
+                <div class="flex items-center gap-2 text-[11px] text-slate-400">
+                  <span>${formatDisplayDate(t.date)}</span>
+                  <span>•</span>
+                  <span class="text-slate-300 font-medium">${t.category || 'General'}</span>
+                  <span>•</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded-md border ${splitBadgeClass}">${splitBadge}</span>
+                </div>
+                ${t.remarks ? `<p class="text-[10px] text-slate-500 italic truncate">${t.remarks}</p>` : ''}
+              </div>
+            </div>
+
+            <div class="text-right shrink-0">
+              <div class="text-sm font-bold font-mono text-emerald-400">${formatPHP(t.amount)}</div>
+              <div class="text-[10px] text-slate-500 font-mono">
+                ${isAeron ? `Naya: ${formatPHP(t.nayaShare)}` : `Aeron: ${formatPHP(t.aeronShare)}`}
+              </div>
+              <button onclick="deleteTransaction('${t.id || idx}')" class="opacity-0 group-hover:opacity-100 text-[10px] text-red-400 hover:text-red-300 underline mt-0.5 transition-opacity">
+                Delete
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function renderAll() {
+      populateMonthDropdown();
+      renderMetrics();
+      renderTransactions();
+    }
+
+    // Delete transaction handler
+    window.deleteTransaction = function(idOrIdx) {
+      if (confirm('Delete this expense entry?')) {
+        transactions.splice(Number(idOrIdx), 1);
+        saveTransactions();
+      }
+    };
+
+    // Split code explanation helper
+    function updateSplitExplanation(code) {
+      const elem = document.getElementById('splitExplanation');
+      if (code === 'A') elem.textContent = 'Aeron pays 100% (personal)';
+      else if (code === 'B') elem.textContent = 'Naya pays 100% (personal)';
+      else elem.textContent = '50% Aeron / 50% Naya';
+    }
+
+    // Split Code Radio listener
+    document.querySelectorAll('input[name="splitCode"]').forEach(radio => {
+      radio.addEventListener('change', (e) => updateSplitExplanation(e.target.value));
+    });
+
+    // Quick Amount buttons
+    document.querySelectorAll('.quick-amt-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const amtInput = document.getElementById('inputAmount');
+        const cur = Number(amtInput.value) || 0;
+        const add = Number(btn.getAttribute('data-amt')) || 0;
+        amtInput.value = (cur + add).toFixed(2);
+      });
+    });
+
+    // Quick Description buttons
+    document.querySelectorAll('.quick-desc-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const descInput = document.getElementById('inputDescription');
+        descInput.value = btn.textContent;
+      });
+    });
+
+    // Add Expense Modal Open/Close
+    const addModal = document.getElementById('addExpenseModal');
+    document.getElementById('openAddModalBtn').addEventListener('click', () => {
+      document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
+      addModal.classList.remove('hidden');
+      document.getElementById('inputAmount').focus();
+    });
+    document.getElementById('closeAddModalBtn').addEventListener('click', () => addModal.classList.add('hidden'));
+
+    // Limiter Modal Open/Close
+    const budgetModal = document.getElementById('budgetModal');
+    document.getElementById('openBudgetModalBtn').addEventListener('click', () => {
+      document.getElementById('cfgBudgetLimitInput').value = appConfig.monthlyBudget;
+      document.getElementById('cfgRentInput').value = appConfig.rent;
+      document.getElementById('cfgElectricInput').value = appConfig.electric;
+      document.getElementById('cfgWaterInput').value = appConfig.water;
+      document.getElementById('cfgOtherBillsInput').value = appConfig.otherBills;
+      budgetModal.classList.remove('hidden');
+    });
+    document.getElementById('editLimiterBtn').addEventListener('click', () => document.getElementById('openBudgetModalBtn').click());
+    document.getElementById('closeBudgetModalBtn').addEventListener('click', () => budgetModal.classList.add('hidden'));
+
+    // Settings Modal Open/Close
+    const settingsModal = document.getElementById('settingsModal');
+    document.getElementById('openSettingsModalBtn').addEventListener('click', () => {
+      document.getElementById('cfgEmailRecipients').value = appConfig.emails || '';
+      document.getElementById('cfgGoogleScriptUrl').value = appConfig.scriptUrl || '';
+      settingsModal.classList.remove('hidden');
+    });
+    document.getElementById('closeSettingsModalBtn').addEventListener('click', () => settingsModal.classList.add('hidden'));
+
+    // Save Budget Configuration
+    document.getElementById('saveBudgetSettingsBtn').addEventListener('click', () => {
+      appConfig.monthlyBudget = Number(document.getElementById('cfgBudgetLimitInput').value) || 60000;
+      appConfig.rent = Number(document.getElementById('cfgRentInput').value) || 0;
+      appConfig.electric = Number(document.getElementById('cfgElectricInput').value) || 0;
+      appConfig.water = Number(document.getElementById('cfgWaterInput').value) || 0;
+      appConfig.otherBills = Number(document.getElementById('cfgOtherBillsInput').value) || 0;
+      
+      localStorage.setItem(CONFIG_KEY, JSON.stringify(appConfig));
+      budgetModal.classList.add('hidden');
+      renderAll();
+    });
+
+    // Form Submission: Add Expense
+    document.getElementById('expenseForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const amount = parseFloat(document.getElementById('inputAmount').value);
+      const desc = document.getElementById('inputDescription').value.trim();
+      const dateVal = document.getElementById('inputDate').value;
+      const category = document.getElementById('inputCategory').value;
+      const paidBy = document.querySelector('input[name="paidBy"]:checked').value;
+      const splitCode = document.querySelector('input[name="splitCode"]:checked').value;
+      const remarks = document.getElementById('inputRemarks').value.trim();
+
+      const { aeronShare, nayaShare } = calculateShares(amount, paidBy, splitCode);
+
+      const newTx = {
+        id: Date.now().toString(),
+        date: dateVal,
+        description: desc,
+        category: category,
+        amount: amount,
+        paidBy: paidBy,
+        splitCode: splitCode,
+        ratio: '',
+        aeronShare: aeronShare,
+        nayaShare: nayaShare,
+        remarks: remarks
+      };
+
+      // Add to front of list
+      transactions.unshift(newTx);
+      saveTransactions();
+
+      // If Google Apps Script URL configured, sync silently
+      if (appConfig.scriptUrl) {
+        fetch(appConfig.scriptUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newTx)
+        }).catch(err => console.log('Google Sheet sync notice:', err));
+      }
+
+      // Reset form & close modal
+      document.getElementById('inputAmount').value = '';
+      document.getElementById('inputDescription').value = '';
+      document.getElementById('inputRemarks').value = '';
+      addModal.classList.add('hidden');
+    });
+
+    // Quick Settle Action (Records repayment)
+    document.getElementById('quickSettleBtn').addEventListener('click', () => {
+      let aeronSpentTotal = 0;
+      let aeronTrueShareTotal = 0;
+      transactions.forEach(t => {
+        if (t.paidBy === 'Aeron James') aeronSpentTotal += Number(t.amount) || 0;
+        aeronTrueShareTotal += Number(t.aeronShare) || 0;
+      });
+      const net = aeronSpentTotal - aeronTrueShareTotal;
+
+      if (Math.abs(net) < 1) {
+        alert('All balances are already settled!');
+        return;
+      }
+
+      const debtor = net > 0 ? 'Naya' : 'Aeron James';
+      const creditor = net > 0 ? 'Aeron James' : 'Naya';
+      const amt = Math.abs(net).toFixed(2);
+
+      if (confirm(`Record a full settlement transfer?\n\n${debtor} pays ${creditor} ₱${amt}?`)) {
+        transactions.unshift({
+          id: Date.now().toString(),
+          date: new Date().toISOString().split('T')[0],
+          description: `Settlement Transfer to ${creditor}`,
+          category: 'Transfer',
+          amount: parseFloat(amt),
+          paidBy: debtor,
+          splitCode: 'A', // Balances the ledger
+          ratio: '',
+          aeronShare: parseFloat(amt),
+          nayaShare: 0,
+          remarks: 'Full settlement transfer'
+        });
+        saveTransactions();
+      }
+    });
+
+    // Payer Filter buttons
+    const filterAllBtn = document.getElementById('filterAllBtn');
+    const filterAeronBtn = document.getElementById('filterAeronBtn');
+    const filterNayaBtn = document.getElementById('filterNayaBtn');
+
+    function setPayerFilter(filter) {
+      activePayerFilter = filter;
+      filterAllBtn.className = filter === 'All' ? 'px-2.5 py-1 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-medium' : 'px-2.5 py-1 rounded-xl bg-slate-800 text-slate-400 font-medium';
+      filterAeronBtn.className = filter === 'Aeron James' ? 'px-2.5 py-1 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/30 font-medium' : 'px-2.5 py-1 rounded-xl bg-slate-800 text-slate-400 font-medium';
+      filterNayaBtn.className = filter === 'Naya' ? 'px-2.5 py-1 rounded-xl bg-pink-500/20 text-pink-400 border border-pink-500/30 font-medium' : 'px-2.5 py-1 rounded-xl bg-slate-800 text-slate-400 font-medium';
+      renderTransactions();
+    }
+
+    filterAllBtn.addEventListener('click', () => setPayerFilter('All'));
+    filterAeronBtn.addEventListener('click', () => setPayerFilter('Aeron James'));
+    filterNayaBtn.addEventListener('click', () => setPayerFilter('Naya'));
+
+    // Month filter change
+    document.getElementById('monthFilterSelect').addEventListener('change', (e) => {
+      activeMonthFilter = e.target.value;
+      renderAll();
+    });
+
+    // Search input
+    document.getElementById('searchInput').addEventListener('input', renderTransactions);
+
+    // Export CSV (Exact Google Sheets compatible schema)
+    document.getElementById('exportCsvBtn').addEventListener('click', () => {
+      const headers = ['Date', 'Description/Item', 'Category', 'Total Amount', 'Paid By', 'Split Code', 'Fixed Share / Ratio', 'Aeron James Share', 'Naya Share', 'Remarks'];
+      const rows = transactions.map(t => [
+        t.date,
+        `"${(t.description || '').replace(/"/g, '""')}"`,
+        t.category || '',
+        t.amount,
+        t.paidBy,
+        t.splitCode,
+        t.ratio || '',
+        t.aeronShare,
+        t.nayaShare,
+        `"${(t.remarks || '').replace(/"/g, '""')}"`
+      ]);
+
+      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', `Budget_Tracker_Export_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+
+    // Backup JSON
+    document.getElementById('backupJsonBtn').addEventListener('click', () => {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(transactions, null, 2));
+      const dl = document.createElement('a');
+      dl.setAttribute("href", dataStr);
+      dl.setAttribute("download", `budget_backup_${new Date().toISOString().split('T')[0]}.json`);
+      dl.click();
+    });
+
+    // Test Email Reminder click
+    document.getElementById('testEmailReminderBtn').addEventListener('click', () => {
+      alert("To activate daily 9:00 PM email reminders:\n\n1. Open your Google Sheet\n2. Go to Extensions > Apps Script\n3. Paste the provided Code.gs\n4. Run setupDailyReminderTrigger() once!\n\nGoogle will then automatically email you every night at 9:00 PM PHT!");
+    });
+
+    // Pre-load Sheet CSV Data if fresh
+    async function loadInitialDataIfEmpty() {
+      if (transactions.length === 0) {
+        try {
+          const res = await fetch('initial_data.json');
+          if (res.ok) {
+            transactions = await res.json();
+            saveTransactions();
+          }
+        } catch (e) {
+          console.log('No local initial_data.json found, continuing with empty store.');
+        }
+      }
+      renderAll();
+    }
+
+    loadInitialDataIfEmpty();
+  </script>
+</body>
+</html>
