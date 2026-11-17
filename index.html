@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Aeron & Naya • Matcha Budget Tracker</title>
+  <title>Aeron & Naya • Budget Tracker</title>
   
   <!-- Mobile Web App Metas -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -15,7 +15,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
 
   <!-- Lucide Icons CDN -->
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -29,7 +29,6 @@
             mono: ['"JetBrains Mono"', 'monospace'],
           },
           colors: {
-            // Matcha & Latte Earth Tone Palette
             matcha: {
               50: '#f4f7ee',
               100: '#e5ecd8',
@@ -51,8 +50,6 @@
               500: '#c2a47e',
               600: '#a88661',
               700: '#87694d',
-              800: '#6e5541',
-              900: '#5c4637',
             },
             warmgray: {
               50: '#fafaf9',
@@ -96,10 +93,10 @@
       scrollbar-width: none;
     }
     .soft-shadow {
-      box-shadow: 0 4px 20px -2px rgba(44, 38, 30, 0.05), 0 2px 6px -1px rgba(44, 38, 30, 0.03);
+      box-shadow: 0 3px 16px -2px rgba(44, 38, 30, 0.05), 0 1px 4px -1px rgba(44, 38, 30, 0.03);
     }
     .soft-shadow-lg {
-      box-shadow: 0 10px 30px -4px rgba(44, 38, 30, 0.08), 0 4px 10px -2px rgba(44, 38, 30, 0.04);
+      box-shadow: 0 10px 30px -4px rgba(44, 38, 30, 0.08);
     }
   </style>
 </head>
@@ -109,202 +106,160 @@
   <header class="sticky top-0 z-30 bg-[#fbf9f5]/90 backdrop-blur-md border-b border-latte-200/80 px-4 pt-safe py-3">
     <div class="max-w-md mx-auto flex items-center justify-between">
       <div class="flex items-center gap-2.5">
-        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-matcha-600 to-matcha-400 flex items-center justify-center text-white shadow-md shadow-matcha-600/20">
-          <i data-lucide="coffee" class="w-5 h-5"></i>
+        <div class="w-9 h-9 rounded-2xl bg-gradient-to-tr from-matcha-600 to-matcha-400 flex items-center justify-center text-white shadow-sm">
+          <i data-lucide="coffee" class="w-4 h-4"></i>
         </div>
         <div>
-          <h1 class="text-base font-extrabold tracking-tight text-warmgray-900 flex items-center gap-1.5">
-            Budget Tracker
-            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-matcha-100 text-matcha-700 border border-matcha-200">Matcha</span>
+          <h1 class="text-sm font-extrabold tracking-tight text-warmgray-900 leading-tight">
+            Aeron & Naya
           </h1>
-          <p class="text-xs text-warmgray-500 flex items-center gap-1.5 font-medium">
-            <span class="w-2 h-2 rounded-full bg-sky-500 inline-block"></span> Aeron &nbsp;•&nbsp;
-            <span class="w-2 h-2 rounded-full bg-rose-400 inline-block"></span> Naya
-          </p>
+          <p class="text-[11px] text-warmgray-500 font-medium">Budget & Spend Limiter</p>
         </div>
       </div>
 
       <div class="flex items-center gap-1.5">
-        <button id="openBudgetModalBtn" class="p-2.5 rounded-2xl bg-white hover:bg-latte-50 border border-latte-200 text-warmgray-700 soft-shadow transition-all active:scale-95" title="Monthly Limiter & Set Bills">
-          <i data-lucide="sliders" class="w-4 h-4 text-matcha-600"></i>
-        </button>
-        <button id="openSettingsModalBtn" class="p-2.5 rounded-2xl bg-white hover:bg-latte-50 border border-latte-200 text-warmgray-700 soft-shadow transition-all active:scale-95" title="Settings & Reminders">
-          <i data-lucide="bell" class="w-4 h-4 text-warmgray-600"></i>
+        <div class="flex items-center gap-1 bg-white border border-latte-200 rounded-xl px-2.5 py-1 text-xs soft-shadow">
+          <i data-lucide="calendar" class="w-3.5 h-3.5 text-matcha-600"></i>
+          <select id="monthFilterSelect" class="bg-transparent text-warmgray-800 font-bold focus:outline-none cursor-pointer text-xs">
+            <!-- Dynamically populated -->
+          </select>
+        </div>
+        <button id="openSettingsModalBtn" class="p-2 rounded-xl bg-white hover:bg-latte-50 border border-latte-200 text-warmgray-700 soft-shadow transition-all active:scale-95" title="Settings & Sync">
+          <i data-lucide="settings" class="w-4 h-4"></i>
         </button>
       </div>
     </div>
   </header>
 
   <!-- MAIN SCROLLABLE CONTENT -->
-  <main class="flex-1 max-w-md mx-auto w-full px-4 pt-4 pb-28 space-y-4">
+  <main class="flex-1 max-w-md mx-auto w-full px-4 pt-3 pb-28 space-y-3.5">
 
-    <!-- MONTH SELECTOR & QUICK DATE -->
-    <div class="flex items-center justify-between text-xs font-medium text-warmgray-600 bg-white p-2 rounded-2xl border border-latte-200 soft-shadow">
-      <div class="flex items-center gap-1.5 pl-2">
-        <i data-lucide="calendar" class="w-4 h-4 text-matcha-600"></i>
-        <select id="monthFilterSelect" class="bg-transparent text-warmgray-900 font-bold focus:outline-none cursor-pointer">
-          <!-- Dynamically populated -->
-        </select>
+    <!-- CLICKABLE INDIVIDUAL MONTHLY LIMITER CARD -->
+    <div class="rounded-3xl p-4 bg-white border border-latte-200 soft-shadow space-y-3">
+      
+      <!-- Clickable Person Selector Tabs -->
+      <div class="flex items-center justify-between">
+        <div class="flex p-1 bg-latte-100 rounded-2xl gap-1 text-xs font-bold w-full">
+          <button id="tabLimiterAeron" class="flex-1 py-1.5 rounded-xl transition-all flex items-center justify-center gap-1.5 text-warmgray-600">
+            <span class="w-2 h-2 rounded-full bg-sky-500"></span> Aeron
+          </button>
+          <button id="tabLimiterNaya" class="flex-1 py-1.5 rounded-xl transition-all flex items-center justify-center gap-1.5 text-warmgray-600">
+            <span class="w-2 h-2 rounded-full bg-rose-400"></span> Naya
+          </button>
+          <button id="tabLimiterBoth" class="flex-1 py-1.5 rounded-xl transition-all flex items-center justify-center gap-1.5 text-warmgray-600">
+            <span>👥</span> Both
+          </button>
+        </div>
       </div>
-      <div class="text-[11px] font-mono bg-latte-100 px-3 py-1 rounded-xl text-warmgray-700 font-semibold" id="currentDateDisplay">
-        Today
+
+      <!-- Hero Safe-to-Spend Amount (Clickable to Edit) -->
+      <div id="heroLimiterClickArea" class="cursor-pointer group hover:bg-latte-50/70 p-3 rounded-2xl transition-all border border-transparent hover:border-latte-200">
+        <div class="flex items-center justify-between text-xs text-warmgray-500 font-medium">
+          <span id="limiterTargetOwnerLabel" class="uppercase tracking-wider font-extrabold text-[11px] text-warmgray-400">Aeron's Safe to Spend</span>
+          <span class="flex items-center gap-1 text-matcha-700 font-bold group-hover:underline text-[11px]">
+            <i data-lucide="edit-3" class="w-3 h-3"></i> Set Limit
+          </span>
+        </div>
+
+        <div class="flex items-baseline justify-between mt-1">
+          <div class="text-3xl font-extrabold font-mono tracking-tight text-warmgray-900" id="heroRemainingAmount">
+            ₱0.00
+          </div>
+          <span id="limiterBurnPercent" class="text-xs font-mono font-bold text-matcha-700 bg-matcha-100 px-2 py-0.5 rounded-lg">
+            0% used
+          </span>
+        </div>
+
+        <!-- Sleek Progress Bar -->
+        <div class="h-2.5 w-full bg-latte-100 rounded-full overflow-hidden mt-2 p-0.5 border border-latte-200">
+          <div id="heroProgressBar" class="h-full rounded-full bg-matcha-600 transition-all duration-500" style="width: 0%"></div>
+        </div>
       </div>
+
+      <!-- Punchy 4-Grid Numbers (Focus on the Amount) -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-xs">
+        <div class="p-2.5 rounded-2xl bg-latte-50/80 border border-latte-200">
+          <div class="text-[10px] uppercase font-bold text-warmgray-400">Limit</div>
+          <div class="text-sm font-extrabold font-mono text-warmgray-800 mt-0.5" id="valPersonLimit">₱0</div>
+        </div>
+
+        <div class="p-2.5 rounded-2xl bg-latte-50/80 border border-latte-200">
+          <div class="text-[10px] uppercase font-bold text-amber-700">Set Bills</div>
+          <div class="text-sm font-extrabold font-mono text-amber-900 mt-0.5" id="valPersonBills">-₱0</div>
+        </div>
+
+        <div class="p-2.5 rounded-2xl bg-latte-50/80 border border-latte-200">
+          <div class="text-[10px] uppercase font-bold text-warmgray-400">Spent</div>
+          <div class="text-sm font-extrabold font-mono text-warmgray-800 mt-0.5" id="valPersonSpent">₱0</div>
+        </div>
+
+        <div class="p-2.5 rounded-2xl bg-matcha-50/80 border border-matcha-200">
+          <div class="text-[10px] uppercase font-bold text-matcha-800">Daily Pace</div>
+          <div class="text-xs font-extrabold font-mono text-matcha-900 mt-0.5" id="valPersonDaily">₱0/d</div>
+        </div>
+      </div>
+
     </div>
 
-    <!-- WHO OWES WHOM SETTLEMENT BANNER -->
-    <div id="settlementCard" class="relative overflow-hidden rounded-3xl p-4 bg-white border border-latte-200 soft-shadow space-y-3">
-      <div class="flex items-center justify-between">
-        <span class="text-xs uppercase tracking-wider font-extrabold text-matcha-800 flex items-center gap-1.5">
-          <i data-lucide="scale" class="w-3.5 h-3.5 text-matcha-600"></i>
-          Shared Ledger Balance
+    <!-- WHO OWES WHOM SETTLEMENT CARD -->
+    <div id="settlementCard" class="rounded-3xl p-3.5 bg-white border border-latte-200 soft-shadow space-y-2.5">
+      <div class="flex items-center justify-between text-xs">
+        <span class="font-extrabold text-warmgray-500 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+          <i data-lucide="scale" class="w-3.5 h-3.5 text-matcha-600"></i> Balance Ledger
         </span>
-        <button id="quickSettleBtn" class="text-[11px] font-bold text-matcha-700 hover:text-matcha-800 flex items-center gap-1 bg-matcha-50 px-2.5 py-1 rounded-xl border border-matcha-200 active:scale-95 transition-all">
-          <i data-lucide="check-circle-2" class="w-3 h-3 text-matcha-600"></i> Record Settle
+        <button id="quickSettleBtn" class="text-[11px] font-bold text-matcha-700 bg-matcha-50 hover:bg-matcha-100 px-2.5 py-1 rounded-xl border border-matcha-200 flex items-center gap-1 active:scale-95 transition-all">
+          <i data-lucide="check" class="w-3 h-3 text-matcha-600"></i> Settle Up
         </button>
       </div>
 
-      <!-- Main Balance Callout -->
-      <div id="settlementCallout" class="p-3.5 rounded-2xl bg-latte-50 border border-latte-200/90 text-sm font-semibold flex items-center justify-between">
-        <span class="flex items-center gap-2">
-          <span class="text-xl">🍵</span>
-          <span id="settlementText" class="text-warmgray-900 font-bold">Calculating balance...</span>
-        </span>
+      <!-- Callout text -->
+      <div class="p-3 rounded-2xl bg-latte-50 border border-latte-200 flex items-center justify-between text-xs">
+        <span class="font-extrabold text-warmgray-900" id="settlementText">Calculating balance...</span>
+        <span class="text-base">🍵</span>
       </div>
 
-      <!-- Breakdown: Aeron & Naya -->
-      <div class="grid grid-cols-2 gap-3 pt-1 text-xs">
-        <div class="p-2.5 rounded-2xl bg-warmgray-50 border border-warmgray-100 space-y-1">
-          <div class="flex items-center justify-between text-warmgray-600">
-            <span class="flex items-center gap-1 font-medium">
-              <span class="w-2 h-2 rounded-full bg-sky-500"></span> Aeron Spent:
-            </span>
-            <span id="aeronSpentDisplay" class="font-mono text-warmgray-900 font-bold">₱0.00</span>
-          </div>
-          <div class="flex items-center justify-between text-warmgray-500 text-[11px]">
-            <span>True Share:</span>
-            <span id="aeronShareDisplay" class="font-mono text-warmgray-700 font-semibold">₱0.00</span>
-          </div>
+      <!-- Quick figures -->
+      <div class="grid grid-cols-2 gap-2 text-xs">
+        <div class="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-warmgray-50 border border-warmgray-100">
+          <span class="text-warmgray-500 flex items-center gap-1 text-[11px]">
+            <span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span> Aeron:
+          </span>
+          <span id="aeronSpentDisplay" class="font-mono font-bold text-warmgray-800 text-xs">₱0.00</span>
         </div>
 
-        <div class="p-2.5 rounded-2xl bg-warmgray-50 border border-warmgray-100 space-y-1">
-          <div class="flex items-center justify-between text-warmgray-600">
-            <span class="flex items-center gap-1 font-medium">
-              <span class="w-2 h-2 rounded-full bg-rose-400"></span> Naya Spent:
-            </span>
-            <span id="nayaSpentDisplay" class="font-mono text-warmgray-900 font-bold">₱0.00</span>
-          </div>
-          <div class="flex items-center justify-between text-warmgray-500 text-[11px]">
-            <span>True Share:</span>
-            <span id="nayaShareDisplay" class="font-mono text-warmgray-700 font-semibold">₱0.00</span>
-          </div>
+        <div class="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-warmgray-50 border border-warmgray-100">
+          <span class="text-warmgray-500 flex items-center gap-1 text-[11px]">
+            <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Naya:
+          </span>
+          <span id="nayaSpentDisplay" class="font-mono font-bold text-warmgray-800 text-xs">₱0.00</span>
         </div>
       </div>
     </div>
 
-    <!-- MONTHLY LIMITER & FIXED BILLS CARD -->
-    <div class="rounded-3xl p-4 bg-white border border-latte-200 soft-shadow space-y-3.5">
-      <div class="flex items-center justify-between">
-        <div>
-          <span class="text-xs uppercase tracking-wider font-extrabold text-warmgray-500 flex items-center gap-1.5">
-            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-matcha-600"></i>
-            Monthly Spending Limiter
-          </span>
-          <h2 class="text-xl font-extrabold text-matcha-700 mt-0.5" id="discretionaryRemainingDisplay">₱0.00 Left</h2>
-        </div>
-        <button id="editLimiterBtn" class="px-3 py-1.5 text-xs font-bold rounded-xl bg-latte-100 hover:bg-latte-200 text-warmgray-800 border border-latte-300 transition-all active:scale-95">
-          Configure
-        </button>
-      </div>
-
-      <!-- Progress Bar -->
-      <div class="space-y-1.5">
-        <div class="flex justify-between text-xs">
-          <span class="text-warmgray-600 font-medium">Safe-to-Spend Burn Rate:</span>
-          <span id="limiterPercentDisplay" class="font-mono font-bold text-matcha-700">0%</span>
-        </div>
-        <div class="h-3 w-full bg-latte-100 rounded-full overflow-hidden p-0.5 border border-latte-200">
-          <div id="limiterProgressBar" class="h-full rounded-full bg-gradient-to-r from-matcha-500 to-matcha-400 transition-all duration-500" style="width: 0%"></div>
-        </div>
-      </div>
-
-      <!-- Limiter Math Breakdown -->
-      <div class="bg-latte-50/80 rounded-2xl p-3 border border-latte-200/90 space-y-2 text-xs">
-        <div class="flex justify-between items-center text-warmgray-700">
-          <span class="font-medium">Total Monthly Budget:</span>
-          <span id="cfgTotalBudget" class="font-mono text-warmgray-900 font-bold">₱60,000.00</span>
-        </div>
-        
-        <div class="flex justify-between items-center text-amber-800 text-[11px] pl-2 border-l-2 border-amber-500/60 font-medium">
-          <span class="flex items-center gap-1">
-            <i data-lucide="receipt" class="w-3 h-3 text-amber-600"></i> Minus Set Bills (Water, Power, Rent):
-          </span>
-          <span id="cfgFixedBillsTotal" class="font-mono font-bold text-amber-900">-₱22,674.89</span>
-        </div>
-
-        <div class="flex justify-between items-center text-matcha-800 text-xs font-bold pt-1 border-t border-latte-200">
-          <span>= Net Safe-to-Spend Allowance:</span>
-          <span id="cfgDiscretionaryPool" class="font-mono font-extrabold text-matcha-700">₱37,325.11</span>
-        </div>
-
-        <div class="flex justify-between items-center text-warmgray-600 text-[11px]">
-          <span>Discretionary Spent This Month:</span>
-          <span id="monthDiscretionarySpent" class="font-mono text-warmgray-800 font-semibold">₱0.00</span>
-        </div>
-
-        <div class="flex justify-between items-center text-warmgray-700 text-[11px] pt-1 border-t border-latte-200/60 font-medium">
-          <span class="flex items-center gap-1">
-            <i data-lucide="gauge" class="w-3 h-3 text-matcha-600"></i> Recommended Daily Pace:
-          </span>
-          <span id="dailyPaceDisplay" class="font-mono font-bold text-warmgray-900">₱0.00 / day</span>
-        </div>
-      </div>
-
-      <!-- Alert note if overspending -->
-      <div id="limiterAlertBadge" class="hidden p-2.5 rounded-xl text-xs font-semibold border">
-        <!-- Injected dynamically -->
-      </div>
-    </div>
-
-    <!-- QUICK STATS TILES -->
-    <div class="grid grid-cols-2 gap-3">
-      <div class="p-3.5 rounded-2xl bg-white border border-latte-200 soft-shadow">
-        <span class="text-[11px] uppercase tracking-wider text-warmgray-500 font-bold">Month Total Spend</span>
-        <div id="monthTotalSpendDisplay" class="text-lg font-extrabold font-mono text-warmgray-900 mt-0.5">₱0.00</div>
-        <div class="text-[10px] text-warmgray-500 mt-0.5" id="monthTxCount">0 expenses logged</div>
-      </div>
-      <div class="p-3.5 rounded-2xl bg-white border border-latte-200 soft-shadow">
-        <span class="text-[11px] uppercase tracking-wider text-warmgray-500 font-bold">Set Bills Protection</span>
-        <div id="billsStatusDisplay" class="text-xs font-bold text-matcha-700 mt-1 flex items-center gap-1">
-          <i data-lucide="check-check" class="w-3.5 h-3.5"></i> Bills Deducted
-        </div>
-        <div class="text-[10px] text-warmgray-500 mt-0.5" id="billsBreakdownMini">Water, Power, Rent</div>
-      </div>
-    </div>
-
-    <!-- TRANSACTION FEED HEADER & SEARCH -->
-    <div class="space-y-2 pt-2">
-      <div class="flex items-center justify-between">
-        <h3 class="text-sm font-extrabold text-warmgray-900 flex items-center gap-1.5">
-          <i data-lucide="history" class="w-4 h-4 text-matcha-600"></i>
-          Recent Expenses
+    <!-- TRANSACTION FEED HEADER & FILTER -->
+    <div class="space-y-2 pt-1">
+      <div class="flex items-center justify-between text-xs">
+        <h3 class="font-extrabold text-warmgray-800 flex items-center gap-1.5">
+          <i data-lucide="receipt" class="w-3.5 h-3.5 text-matcha-600"></i>
+          Expenses
         </h3>
-        <div class="flex gap-1.5 text-xs">
-          <button id="filterAllBtn" class="px-2.5 py-1 rounded-xl bg-matcha-600 text-white font-bold soft-shadow transition-all">All</button>
-          <button id="filterAeronBtn" class="px-2.5 py-1 rounded-xl bg-white text-warmgray-600 hover:text-warmgray-900 border border-latte-200 font-semibold transition-all">Aeron</button>
-          <button id="filterNayaBtn" class="px-2.5 py-1 rounded-xl bg-white text-warmgray-600 hover:text-warmgray-900 border border-latte-200 font-semibold transition-all">Naya</button>
+        <div class="flex gap-1 text-xs">
+          <button id="filterAllBtn" class="px-2.5 py-1 rounded-xl bg-matcha-600 text-white font-bold text-[11px]">All</button>
+          <button id="filterAeronBtn" class="px-2.5 py-1 rounded-xl bg-white text-warmgray-600 border border-latte-200 font-semibold text-[11px]">Aeron</button>
+          <button id="filterNayaBtn" class="px-2.5 py-1 rounded-xl bg-white text-warmgray-600 border border-latte-200 font-semibold text-[11px]">Naya</button>
         </div>
       </div>
 
-      <!-- Search & quick filter -->
+      <!-- Compact Search input -->
       <div class="relative">
-        <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-warmgray-400"></i>
-        <input type="text" id="searchInput" placeholder="Search expenses, coffee, groceries..." 
-          class="w-full bg-white border border-latte-200 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-warmgray-800 placeholder-warmgray-400 focus:outline-none focus:border-matcha-500 transition-colors soft-shadow">
+        <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-warmgray-400"></i>
+        <input type="text" id="searchInput" placeholder="Search item, category, amount..." 
+          class="w-full bg-white border border-latte-200 rounded-2xl pl-9 pr-3 py-2 text-xs text-warmgray-800 placeholder-warmgray-400 focus:outline-none focus:border-matcha-500 soft-shadow">
       </div>
     </div>
 
     <!-- TRANSACTION LIST CONTAINER -->
-    <div id="transactionList" class="space-y-2.5">
+    <div id="transactionList" class="space-y-2">
       <!-- Injected via JS -->
     </div>
 
@@ -313,13 +268,13 @@
   <!-- STICKY BOTTOM QUICK ACTION BAR -->
   <div class="fixed bottom-0 left-0 right-0 z-30 bg-[#fbf9f5]/95 backdrop-blur-xl border-t border-latte-200 px-4 py-3 pb-safe">
     <div class="max-w-md mx-auto flex items-center gap-3">
-      <button id="openAddModalBtn" class="flex-1 bg-gradient-to-r from-matcha-600 to-matcha-500 hover:from-matcha-700 hover:to-matcha-600 active:scale-[0.98] text-white font-extrabold py-3.5 px-4 rounded-2xl shadow-lg shadow-matcha-600/25 flex items-center justify-center gap-2 transition-all text-sm">
-        <i data-lucide="plus-circle" class="w-5 h-5"></i>
+      <button id="openAddModalBtn" class="flex-1 bg-gradient-to-r from-matcha-600 to-matcha-500 hover:from-matcha-700 hover:to-matcha-600 active:scale-[0.98] text-white font-extrabold py-3.5 px-4 rounded-2xl shadow-md shadow-matcha-600/25 flex items-center justify-center gap-2 transition-all text-sm">
+        <i data-lucide="plus-circle" class="w-4 h-4"></i>
         <span>Log Purchase</span>
       </button>
 
-      <button id="exportCsvBtn" class="p-3.5 bg-white hover:bg-latte-50 active:scale-95 text-warmgray-700 rounded-2xl border border-latte-200 soft-shadow transition-all" title="Export CSV for Google Sheets">
-        <i data-lucide="download" class="w-5 h-5"></i>
+      <button id="exportCsvBtn" class="p-3.5 bg-white hover:bg-latte-50 active:scale-95 text-warmgray-700 rounded-2xl border border-latte-200 soft-shadow transition-all" title="Export CSV">
+        <i data-lucide="download" class="w-4 h-4"></i>
       </button>
     </div>
   </div>
@@ -328,314 +283,230 @@
   <div id="addExpenseModal" class="fixed inset-0 z-50 bg-warmgray-900/40 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-white border-t sm:border border-latte-200 rounded-t-3xl sm:rounded-3xl w-full max-w-md max-h-[90vh] flex flex-col soft-shadow-lg animate-in slide-in-from-bottom duration-200">
       
-      <!-- Modal Header -->
       <div class="p-4 border-b border-latte-100 flex items-center justify-between">
-        <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-xl bg-matcha-100 text-matcha-700 flex items-center justify-center">
-            <i data-lucide="receipt" class="w-5 h-5"></i>
-          </div>
-          <div>
-            <h3 class="text-base font-extrabold text-warmgray-900">Log Purchase</h3>
-            <p class="text-[11px] text-warmgray-500">Record cost & calculate split</p>
-          </div>
-        </div>
-        <button id="closeAddModalBtn" class="p-2 text-warmgray-400 hover:text-warmgray-700 rounded-xl bg-latte-100">
+        <h3 class="text-sm font-extrabold text-warmgray-900 flex items-center gap-2">
+          <i data-lucide="plus" class="w-4 h-4 text-matcha-600"></i> New Purchase
+        </h3>
+        <button id="closeAddModalBtn" class="p-1.5 text-warmgray-400 hover:text-warmgray-700 rounded-xl bg-latte-100">
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
 
-      <!-- Modal Body (Scrollable) -->
-      <form id="expenseForm" class="p-4 space-y-3.5 overflow-y-auto no-scrollbar flex-1 text-xs">
+      <form id="expenseForm" class="p-4 space-y-3 overflow-y-auto no-scrollbar flex-1 text-xs">
         
         <!-- Amount Input -->
         <div class="space-y-1">
-          <label class="font-extrabold text-warmgray-700 uppercase tracking-wider text-[11px] flex justify-between">
-            <span>Amount (PHP) *</span>
-            <span class="text-matcha-700 font-mono text-xs font-bold">₱</span>
-          </label>
           <div class="relative">
-            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xl font-bold text-warmgray-400">₱</span>
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-lg font-bold text-warmgray-400">₱</span>
             <input type="number" step="0.01" min="0.01" id="inputAmount" required placeholder="0.00"
-              class="w-full bg-latte-50 border border-latte-200 rounded-2xl pl-9 pr-4 py-3 text-xl font-extrabold font-mono text-matcha-700 placeholder-warmgray-400 focus:outline-none focus:border-matcha-500 focus:bg-white transition-colors">
+              class="w-full bg-latte-50 border border-latte-200 rounded-2xl pl-8 pr-4 py-3 text-2xl font-extrabold font-mono text-matcha-700 placeholder-warmgray-400 focus:outline-none focus:border-matcha-500 focus:bg-white transition-colors">
           </div>
           <!-- Quick Amount Chips -->
-          <div class="flex gap-1.5 pt-1 overflow-x-auto no-scrollbar">
-            <button type="button" class="quick-amt-btn px-2.5 py-1 bg-latte-100 hover:bg-latte-200 rounded-xl text-warmgray-700 font-mono text-[11px] font-semibold" data-amt="50">+₱50</button>
-            <button type="button" class="quick-amt-btn px-2.5 py-1 bg-latte-100 hover:bg-latte-200 rounded-xl text-warmgray-700 font-mono text-[11px] font-semibold" data-amt="100">+₱100</button>
-            <button type="button" class="quick-amt-btn px-2.5 py-1 bg-latte-100 hover:bg-latte-200 rounded-xl text-warmgray-700 font-mono text-[11px] font-semibold" data-amt="250">+₱250</button>
-            <button type="button" class="quick-amt-btn px-2.5 py-1 bg-latte-100 hover:bg-latte-200 rounded-xl text-warmgray-700 font-mono text-[11px] font-semibold" data-amt="500">+₱500</button>
-            <button type="button" class="quick-amt-btn px-2.5 py-1 bg-latte-100 hover:bg-latte-200 rounded-xl text-warmgray-700 font-mono text-[11px] font-semibold" data-amt="1000">+₱1,000</button>
+          <div class="flex gap-1 pt-1 overflow-x-auto no-scrollbar">
+            <button type="button" class="quick-amt-btn px-2.5 py-1 bg-latte-100 hover:bg-latte-200 rounded-xl text-warmgray-700 font-mono text-[11px] font-semibold" data-amt="50">+50</button>
+            <button type="button" class="quick-amt-btn px-2.5 py-1 bg-latte-100 hover:bg-latte-200 rounded-xl text-warmgray-700 font-mono text-[11px] font-semibold" data-amt="100">+100</button>
+            <button type="button" class="quick-amt-btn px-2.5 py-1 bg-latte-100 hover:bg-latte-200 rounded-xl text-warmgray-700 font-mono text-[11px] font-semibold" data-amt="250">+250</button>
+            <button type="button" class="quick-amt-btn px-2.5 py-1 bg-latte-100 hover:bg-latte-200 rounded-xl text-warmgray-700 font-mono text-[11px] font-semibold" data-amt="500">+500</button>
+            <button type="button" class="quick-amt-btn px-2.5 py-1 bg-latte-100 hover:bg-latte-200 rounded-xl text-warmgray-700 font-mono text-[11px] font-semibold" data-amt="1000">+1,000</button>
           </div>
         </div>
 
         <!-- Description Input -->
         <div class="space-y-1">
-          <label class="font-extrabold text-warmgray-700 uppercase tracking-wider text-[11px]">Description / Item *</label>
-          <input type="text" id="inputDescription" required placeholder="e.g. FoodPanda, Water Bill, Groceries, Coffee..."
-            class="w-full bg-latte-50 border border-latte-200 rounded-2xl px-3.5 py-2.5 text-xs text-warmgray-900 placeholder-warmgray-400 focus:outline-none focus:border-matcha-500 focus:bg-white transition-colors">
+          <input type="text" id="inputDescription" required placeholder="What was purchased? (e.g. FoodPanda, Rent...)"
+            class="w-full bg-latte-50 border border-latte-200 rounded-2xl px-3.5 py-2.5 text-xs text-warmgray-900 placeholder-warmgray-400 focus:outline-none focus:border-matcha-500 focus:bg-white">
           
           <!-- Suggested Tags -->
-          <div class="flex gap-1.5 pt-1 overflow-x-auto no-scrollbar text-[11px]">
-            <button type="button" class="quick-desc-btn px-2.5 py-1 rounded-xl bg-latte-100 hover:bg-latte-200 text-warmgray-700 font-medium">Water Bill</button>
-            <button type="button" class="quick-desc-btn px-2.5 py-1 rounded-xl bg-latte-100 hover:bg-latte-200 text-warmgray-700 font-medium">Electric Bill</button>
-            <button type="button" class="quick-desc-btn px-2.5 py-1 rounded-xl bg-latte-100 hover:bg-latte-200 text-warmgray-700 font-medium">Rent</button>
-            <button type="button" class="quick-desc-btn px-2.5 py-1 rounded-xl bg-latte-100 hover:bg-latte-200 text-warmgray-700 font-medium">Grocery</button>
-            <button type="button" class="quick-desc-btn px-2.5 py-1 rounded-xl bg-latte-100 hover:bg-latte-200 text-warmgray-700 font-medium">FoodPanda</button>
-            <button type="button" class="quick-desc-btn px-2.5 py-1 rounded-xl bg-latte-100 hover:bg-latte-200 text-warmgray-700 font-medium">GrabCar</button>
-            <button type="button" class="quick-desc-btn px-2.5 py-1 rounded-xl bg-latte-100 hover:bg-latte-200 text-warmgray-700 font-medium">Matcha / Coffee</button>
+          <div class="flex gap-1.5 pt-0.5 overflow-x-auto no-scrollbar text-[11px]">
+            <button type="button" class="quick-desc-btn px-2.5 py-1 rounded-xl bg-latte-100 text-warmgray-700 font-medium">Water Bill</button>
+            <button type="button" class="quick-desc-btn px-2.5 py-1 rounded-xl bg-latte-100 text-warmgray-700 font-medium">Electric Bill</button>
+            <button type="button" class="quick-desc-btn px-2.5 py-1 rounded-xl bg-latte-100 text-warmgray-700 font-medium">Rent</button>
+            <button type="button" class="quick-desc-btn px-2.5 py-1 rounded-xl bg-latte-100 text-warmgray-700 font-medium">Grocery</button>
+            <button type="button" class="quick-desc-btn px-2.5 py-1 rounded-xl bg-latte-100 text-warmgray-700 font-medium">FoodPanda</button>
+            <button type="button" class="quick-desc-btn px-2.5 py-1 rounded-xl bg-latte-100 text-warmgray-700 font-medium">Coffee</button>
           </div>
         </div>
 
-        <!-- Date & Payment Category / Channel -->
-        <div class="grid grid-cols-2 gap-3">
-          <div class="space-y-1">
-            <label class="font-extrabold text-warmgray-700 uppercase tracking-wider text-[11px]">Date *</label>
-            <input type="date" id="inputDate" required
-              class="w-full bg-latte-50 border border-latte-200 rounded-2xl px-3 py-2.5 text-xs text-warmgray-900 focus:outline-none focus:border-matcha-500">
-          </div>
-          <div class="space-y-1">
-            <label class="font-extrabold text-warmgray-700 uppercase tracking-wider text-[11px]">Wallet / Channel</label>
-            <select id="inputCategory" class="w-full bg-latte-50 border border-latte-200 rounded-2xl px-3 py-2.5 text-xs text-warmgray-900 focus:outline-none focus:border-matcha-500">
-              <option value="Cash">Cash</option>
-              <option value="Maya">Maya</option>
-              <option value="Gcash">Gcash</option>
-              <option value="UB">UB (UnionBank)</option>
-              <option value="RCBC">RCBC</option>
-              <option value="EastWest">EastWest</option>
-              <option value="Maribank">Maribank</option>
-              <option value="BDO">BDO</option>
-              <option value="BPI">BPI</option>
-              <option value="General">Other / Card</option>
-            </select>
-          </div>
+        <!-- Date & Wallet -->
+        <div class="grid grid-cols-2 gap-2">
+          <input type="date" id="inputDate" required
+            class="w-full bg-latte-50 border border-latte-200 rounded-2xl px-3 py-2 text-xs text-warmgray-900 focus:outline-none focus:border-matcha-500">
+          <select id="inputCategory" class="w-full bg-latte-50 border border-latte-200 rounded-2xl px-3 py-2 text-xs text-warmgray-900 focus:outline-none focus:border-matcha-500">
+            <option value="Cash">Cash</option>
+            <option value="Maya">Maya</option>
+            <option value="Gcash">Gcash</option>
+            <option value="UB">UB</option>
+            <option value="RCBC">RCBC</option>
+            <option value="EastWest">EastWest</option>
+            <option value="Maribank">Maribank</option>
+            <option value="General">Other / Card</option>
+          </select>
         </div>
 
         <!-- Paid By Toggle -->
-        <div class="space-y-1.5">
-          <label class="font-extrabold text-warmgray-700 uppercase tracking-wider text-[11px]">Paid By *</label>
-          <div class="grid grid-cols-2 gap-2">
-            <label class="cursor-pointer">
-              <input type="radio" name="paidBy" value="Aeron James" checked class="peer sr-only">
-              <div class="p-2.5 rounded-2xl border border-latte-200 bg-latte-50 peer-checked:bg-sky-50 peer-checked:border-sky-500 peer-checked:text-sky-800 text-warmgray-700 text-center font-bold transition-all flex items-center justify-center gap-1.5">
-                <span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span> Aeron James
-              </div>
-            </label>
-            <label class="cursor-pointer">
-              <input type="radio" name="paidBy" value="Naya" class="peer sr-only">
-              <div class="p-2.5 rounded-2xl border border-latte-200 bg-latte-50 peer-checked:bg-rose-50 peer-checked:border-rose-400 peer-checked:text-rose-800 text-warmgray-700 text-center font-bold transition-all flex items-center justify-center gap-1.5">
-                <span class="w-2.5 h-2.5 rounded-full bg-rose-400"></span> Naya
-              </div>
-            </label>
-          </div>
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <label class="cursor-pointer">
+            <input type="radio" name="paidBy" value="Aeron James" checked class="peer sr-only">
+            <div class="p-2.5 rounded-2xl border border-latte-200 bg-latte-50 peer-checked:bg-sky-50 peer-checked:border-sky-500 peer-checked:text-sky-800 text-warmgray-600 text-center font-bold text-xs flex items-center justify-center gap-1.5 transition-all">
+              <span class="w-2 h-2 rounded-full bg-sky-500"></span> Aeron James
+            </div>
+          </label>
+          <label class="cursor-pointer">
+            <input type="radio" name="paidBy" value="Naya" class="peer sr-only">
+            <div class="p-2.5 rounded-2xl border border-latte-200 bg-latte-50 peer-checked:bg-rose-50 peer-checked:border-rose-400 peer-checked:text-rose-800 text-warmgray-600 text-center font-bold text-xs flex items-center justify-center gap-1.5 transition-all">
+              <span class="w-2 h-2 rounded-full bg-rose-400"></span> Naya
+            </div>
+          </label>
         </div>
 
         <!-- Split Code Selector -->
-        <div class="space-y-1.5">
-          <label class="font-extrabold text-warmgray-700 uppercase tracking-wider text-[11px] flex justify-between">
-            <span>Split Rule (Sheet Format) *</span>
-            <span id="splitExplanation" class="text-warmgray-500 font-normal">50% Aeron / 50% Naya</span>
+        <div class="grid grid-cols-3 gap-1.5 pt-1">
+          <label class="cursor-pointer">
+            <input type="radio" name="splitCode" value="C" checked class="peer sr-only">
+            <div class="p-2 rounded-xl border border-latte-200 bg-latte-50 peer-checked:bg-matcha-100 peer-checked:border-matcha-600 peer-checked:text-matcha-900 text-warmgray-700 text-center font-bold text-xs">
+              50 / 50
+            </div>
           </label>
-          <div class="grid grid-cols-3 gap-2">
-            <label class="cursor-pointer">
-              <input type="radio" name="splitCode" value="C" checked class="peer sr-only">
-              <div class="p-2 rounded-2xl border border-latte-200 bg-latte-50 peer-checked:bg-matcha-100 peer-checked:border-matcha-600 peer-checked:text-matcha-900 text-warmgray-700 text-center font-bold transition-all">
-                <div class="text-xs">Code C</div>
-                <div class="text-[10px] text-warmgray-500 font-medium">50 / 50 Split</div>
-              </div>
-            </label>
-            <label class="cursor-pointer">
-              <input type="radio" name="splitCode" value="A" class="peer sr-only">
-              <div class="p-2 rounded-2xl border border-latte-200 bg-latte-50 peer-checked:bg-sky-50 peer-checked:border-sky-500 peer-checked:text-sky-900 text-warmgray-700 text-center font-bold transition-all">
-                <div class="text-xs">Code A</div>
-                <div class="text-[10px] text-warmgray-500 font-medium">Aeron 100%</div>
-              </div>
-            </label>
-            <label class="cursor-pointer">
-              <input type="radio" name="splitCode" value="B" class="peer sr-only">
-              <div class="p-2 rounded-2xl border border-latte-200 bg-latte-50 peer-checked:bg-rose-50 peer-checked:border-rose-400 peer-checked:text-rose-900 text-warmgray-700 text-center font-bold transition-all">
-                <div class="text-xs">Code B</div>
-                <div class="text-[10px] text-warmgray-500 font-medium">Naya 100%</div>
-              </div>
-            </label>
-          </div>
+          <label class="cursor-pointer">
+            <input type="radio" name="splitCode" value="A" class="peer sr-only">
+            <div class="p-2 rounded-xl border border-latte-200 bg-latte-50 peer-checked:bg-sky-50 peer-checked:border-sky-500 peer-checked:text-sky-900 text-warmgray-700 text-center font-bold text-xs">
+              Aeron 100%
+            </div>
+          </label>
+          <label class="cursor-pointer">
+            <input type="radio" name="splitCode" value="B" class="peer sr-only">
+            <div class="p-2 rounded-xl border border-latte-200 bg-latte-50 peer-checked:bg-rose-50 peer-checked:border-rose-400 peer-checked:text-rose-900 text-warmgray-700 text-center font-bold text-xs">
+              Naya 100%
+            </div>
+          </label>
         </div>
 
-        <!-- Remarks (Optional) -->
-        <div class="space-y-1">
-          <label class="font-extrabold text-warmgray-700 uppercase tracking-wider text-[11px]">Remarks (Optional)</label>
-          <input type="text" id="inputRemarks" placeholder="Notes, specific split details, etc."
-            class="w-full bg-latte-50 border border-latte-200 rounded-2xl px-3.5 py-2 text-xs text-warmgray-900 placeholder-warmgray-400 focus:outline-none focus:border-matcha-500">
-        </div>
+        <!-- Remarks -->
+        <input type="text" id="inputRemarks" placeholder="Remarks (optional)"
+          class="w-full bg-latte-50 border border-latte-200 rounded-2xl px-3 py-2 text-xs text-warmgray-800 focus:outline-none focus:border-matcha-500">
 
         <!-- Submit Button -->
-        <div class="pt-2">
-          <button type="submit" id="saveExpenseBtn" class="w-full bg-matcha-600 hover:bg-matcha-700 active:scale-[0.98] text-white font-extrabold py-3.5 px-4 rounded-2xl shadow-lg shadow-matcha-600/30 flex items-center justify-center gap-2 text-sm transition-all">
-            <i data-lucide="check" class="w-5 h-5"></i>
-            <span>Save Purchase</span>
-          </button>
-        </div>
+        <button type="submit" class="w-full bg-matcha-600 hover:bg-matcha-700 text-white font-extrabold py-3.5 px-4 rounded-2xl text-xs transition-all shadow-md shadow-matcha-600/30">
+          Save Purchase
+        </button>
       </form>
     </div>
   </div>
 
-  <!-- MODAL: CONFIGURE BUDGET LIMITER & BILLS -->
+  <!-- MODAL: FAST CLICKABLE PERSON LIMITER EDITOR -->
   <div id="budgetModal" class="fixed inset-0 z-50 bg-warmgray-900/40 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-white border border-latte-200 rounded-3xl w-full max-w-md max-h-[90vh] flex flex-col soft-shadow-lg overflow-hidden">
       
       <div class="p-4 border-b border-latte-100 flex items-center justify-between">
-        <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-xl bg-matcha-100 text-matcha-700 flex items-center justify-center">
-            <i data-lucide="sliders" class="w-5 h-5"></i>
-          </div>
-          <div>
-            <h3 class="text-base font-extrabold text-warmgray-900">Monthly Limiter & Set Bills</h3>
-            <p class="text-[11px] text-warmgray-500">Lock fixed bills so you cannot overspend</p>
-          </div>
-        </div>
-        <button id="closeBudgetModalBtn" class="p-2 text-warmgray-400 hover:text-warmgray-700 rounded-xl bg-latte-100">
+        <h3 class="text-sm font-extrabold text-warmgray-900" id="modalLimiterTitle">
+          Personal Spending Limit
+        </h3>
+        <button id="closeBudgetModalBtn" class="p-1.5 text-warmgray-400 hover:text-warmgray-700 rounded-xl bg-latte-100">
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
 
-      <div class="p-4 space-y-4 overflow-y-auto no-scrollbar text-xs">
+      <div class="p-4 space-y-3.5 overflow-y-auto no-scrollbar text-xs">
         
-        <!-- Explanation Box -->
-        <div class="bg-latte-100/70 border border-latte-200 rounded-2xl p-3 text-warmgray-700 space-y-1">
-          <div class="font-extrabold flex items-center gap-1.5 text-xs text-warmgray-900">
-            <i data-lucide="info" class="w-4 h-4 text-matcha-600"></i> How the Limiter Works:
-          </div>
-          <p class="text-[11px] text-warmgray-600 leading-relaxed">
-            Your Monthly Spending Limit is reduced by your <strong>Set Fixed Bills</strong> (Rent, Electric, and Water). The remaining balance is your <strong>Safe-to-Spend Pool</strong> for dining, groceries, and personal items.
-          </p>
+        <!-- Toggle Person in Modal -->
+        <div class="flex p-1 bg-latte-100 rounded-2xl gap-1 text-xs font-bold">
+          <button id="modalTabAeron" type="button" class="flex-1 py-1.5 rounded-xl transition-all flex items-center justify-center gap-1.5 bg-white text-sky-800 soft-shadow">
+            <span class="w-2 h-2 rounded-full bg-sky-500"></span> Aeron's Limit
+          </button>
+          <button id="modalTabNaya" type="button" class="flex-1 py-1.5 rounded-xl transition-all flex items-center justify-center gap-1.5 text-warmgray-600">
+            <span class="w-2 h-2 rounded-full bg-rose-400"></span> Naya's Limit
+          </button>
         </div>
 
-        <!-- Total Monthly Limit Input -->
-        <div class="space-y-1">
-          <label class="font-extrabold text-warmgray-700 uppercase tracking-wider text-[11px]">Total Monthly Budget Limit (₱)</label>
-          <input type="number" id="cfgBudgetLimitInput" step="100" class="w-full bg-latte-50 border border-latte-200 rounded-2xl px-3.5 py-2.5 text-sm font-extrabold font-mono text-matcha-700 focus:outline-none focus:border-matcha-500">
+        <!-- Monthly Target Input -->
+        <div class="p-3 bg-latte-50 rounded-2xl border border-latte-200 space-y-1">
+          <label class="font-extrabold text-warmgray-700 text-xs flex justify-between">
+            <span id="labelPersonTarget">Monthly Budget Target</span>
+            <span class="text-matcha-700 font-mono">PHP</span>
+          </label>
+          <input type="number" id="inputPersonTarget" step="500"
+            class="w-full bg-white border border-latte-200 rounded-xl px-3 py-2 text-lg font-mono font-extrabold text-matcha-800 focus:outline-none focus:border-matcha-500">
         </div>
 
-        <!-- Fixed Bills Section -->
-        <div class="space-y-2 pt-2 border-t border-latte-100">
-          <span class="font-extrabold text-warmgray-800 uppercase tracking-wider text-[11px] flex items-center gap-1">
-            <i data-lucide="home" class="w-3.5 h-3.5 text-matcha-600"></i> Set Bills Deducted Automatically:
+        <!-- Fixed Bills Share Input -->
+        <div class="space-y-2">
+          <span class="font-extrabold text-warmgray-700 text-[11px] uppercase tracking-wider">
+            Share of Fixed Bills (Water, Electric, Rent):
           </span>
-          
-          <div class="grid grid-cols-1 gap-2.5">
-            <div class="flex items-center justify-between p-2.5 rounded-2xl bg-latte-50 border border-latte-200">
-              <span class="font-semibold text-warmgray-800">🏢 Rent (Monthly):</span>
+
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between p-2 rounded-xl bg-latte-50 border border-latte-200">
+              <span class="font-semibold text-warmgray-700">🏢 Rent Share:</span>
               <div class="flex items-center gap-1">
-                <span class="text-warmgray-500 font-mono">₱</span>
-                <input type="number" id="cfgRentInput" class="w-24 bg-white border border-latte-200 rounded-xl px-2 py-1 text-right font-mono text-warmgray-900 font-bold">
+                <span class="text-warmgray-400 font-mono">₱</span>
+                <input type="number" id="inputPersonRent" class="w-24 bg-white border border-latte-200 rounded-lg px-2 py-1 text-right font-mono font-bold text-warmgray-900">
               </div>
             </div>
 
-            <div class="flex items-center justify-between p-2.5 rounded-2xl bg-latte-50 border border-latte-200">
-              <span class="font-semibold text-warmgray-800">⚡ Electric Bill (Est/Actual):</span>
+            <div class="flex items-center justify-between p-2 rounded-xl bg-latte-50 border border-latte-200">
+              <span class="font-semibold text-warmgray-700">⚡ Electric Bill Share:</span>
               <div class="flex items-center gap-1">
-                <span class="text-warmgray-500 font-mono">₱</span>
-                <input type="number" id="cfgElectricInput" class="w-24 bg-white border border-latte-200 rounded-xl px-2 py-1 text-right font-mono text-warmgray-900 font-bold">
+                <span class="text-warmgray-400 font-mono">₱</span>
+                <input type="number" id="inputPersonElectric" class="w-24 bg-white border border-latte-200 rounded-lg px-2 py-1 text-right font-mono font-bold text-warmgray-900">
               </div>
             </div>
 
-            <div class="flex items-center justify-between p-2.5 rounded-2xl bg-latte-50 border border-latte-200">
-              <span class="font-semibold text-warmgray-800">💧 Water Bill (Est/Actual):</span>
+            <div class="flex items-center justify-between p-2 rounded-xl bg-latte-50 border border-latte-200">
+              <span class="font-semibold text-warmgray-700">💧 Water Bill Share:</span>
               <div class="flex items-center gap-1">
-                <span class="text-warmgray-500 font-mono">₱</span>
-                <input type="number" id="cfgWaterInput" class="w-24 bg-white border border-latte-200 rounded-xl px-2 py-1 text-right font-mono text-warmgray-900 font-bold">
+                <span class="text-warmgray-400 font-mono">₱</span>
+                <input type="number" id="inputPersonWater" class="w-24 bg-white border border-latte-200 rounded-lg px-2 py-1 text-right font-mono font-bold text-warmgray-900">
               </div>
             </div>
 
-            <div class="flex items-center justify-between p-2.5 rounded-2xl bg-latte-50 border border-latte-200">
-              <span class="font-semibold text-warmgray-800">📶 Other Bills (Wi-Fi/PLDT):</span>
+            <div class="flex items-center justify-between p-2 rounded-xl bg-latte-50 border border-latte-200">
+              <span class="font-semibold text-warmgray-700">📶 Other Bills (Wi-Fi, etc.):</span>
               <div class="flex items-center gap-1">
-                <span class="text-warmgray-500 font-mono">₱</span>
-                <input type="number" id="cfgOtherBillsInput" class="w-24 bg-white border border-latte-200 rounded-xl px-2 py-1 text-right font-mono text-warmgray-900 font-bold">
+                <span class="text-warmgray-400 font-mono">₱</span>
+                <input type="number" id="inputPersonOther" class="w-24 bg-white border border-latte-200 rounded-lg px-2 py-1 text-right font-mono font-bold text-warmgray-900">
               </div>
             </div>
           </div>
         </div>
 
-        <button id="saveBudgetSettingsBtn" class="w-full bg-matcha-600 hover:bg-matcha-700 text-white font-extrabold py-3 rounded-2xl text-xs transition-all shadow-md shadow-matcha-600/20">
-          Save Limiter Settings
+        <button id="savePersonBudgetBtn" class="w-full bg-matcha-600 hover:bg-matcha-700 text-white font-extrabold py-3 rounded-2xl text-xs transition-all shadow-md shadow-matcha-600/20">
+          Save Settings
         </button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: SETTINGS, EMAIL REMINDER & GOOGLE SYNC -->
+  <!-- MODAL: SETTINGS, EMAIL REMINDER & SYNC -->
   <div id="settingsModal" class="fixed inset-0 z-50 bg-warmgray-900/40 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-white border border-latte-200 rounded-3xl w-full max-w-md max-h-[90vh] flex flex-col soft-shadow-lg overflow-hidden">
       
       <div class="p-4 border-b border-latte-100 flex items-center justify-between">
-        <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-xl bg-latte-100 text-warmgray-800 flex items-center justify-center">
-            <i data-lucide="bell" class="w-5 h-5 text-matcha-600"></i>
-          </div>
-          <div>
-            <h3 class="text-base font-extrabold text-warmgray-900">Sync & Daily Reminder</h3>
-            <p class="text-[11px] text-warmgray-500">9:00 PM PHT Email & Cloud Sync</p>
-          </div>
-        </div>
-        <button id="closeSettingsModalBtn" class="p-2 text-warmgray-400 hover:text-warmgray-700 rounded-xl bg-latte-100">
+        <h3 class="text-sm font-extrabold text-warmgray-900">Sync & Reminder Settings</h3>
+        <button id="closeSettingsModalBtn" class="p-1.5 text-warmgray-400 hover:text-warmgray-700 rounded-xl bg-latte-100">
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
 
-      <div class="p-4 space-y-4 overflow-y-auto no-scrollbar text-xs">
+      <div class="p-4 space-y-3.5 overflow-y-auto no-scrollbar text-xs">
         
-        <!-- Daily 9:00 PM Email Reminder Card -->
-        <div class="bg-latte-50 rounded-2xl p-3.5 border border-latte-200 space-y-2.5">
+        <div class="bg-latte-50 rounded-2xl p-3 border border-latte-200 space-y-2">
           <div class="flex items-center justify-between">
-            <span class="font-extrabold text-warmgray-900 flex items-center gap-1.5 text-xs">
-              <i data-lucide="bell" class="w-4 h-4 text-matcha-600"></i>
-              Daily 9:00 PM PH Time Reminder
-            </span>
-            <span class="px-2 py-0.5 rounded-full bg-matcha-100 text-matcha-800 text-[10px] font-bold border border-matcha-200">Active</span>
+            <span class="font-extrabold text-warmgray-900">⏰ Daily 9:00 PM Reminder</span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-matcha-100 text-matcha-800">PHT</span>
           </div>
-          <p class="text-warmgray-600 text-[11px] leading-relaxed">
-            Every night at 9:00 PM (Manila Time), Google Apps Script triggers an automated reminder to log all daily expenses into this tracker.
-          </p>
-
-          <div class="space-y-1">
-            <label class="text-warmgray-700 font-bold text-[11px]">Reminder Email(s):</label>
-            <input type="text" id="cfgEmailRecipients" placeholder="aeron@example.com, naya@example.com"
-              class="w-full bg-white border border-latte-200 rounded-xl px-3 py-2 text-xs text-warmgray-900 font-medium">
-          </div>
-
-          <button id="testEmailReminderBtn" class="w-full py-2 bg-white hover:bg-latte-100 text-warmgray-800 font-bold rounded-xl border border-latte-200 flex items-center justify-center gap-1.5 transition-all">
-            <i data-lucide="send" class="w-3.5 h-3.5 text-matcha-600"></i> Send Test Reminder Now
-          </button>
+          <input type="text" id="cfgEmailRecipients" placeholder="aeron@example.com, naya@example.com"
+            class="w-full bg-white border border-latte-200 rounded-xl px-3 py-2 text-xs text-warmgray-900">
         </div>
 
-        <!-- Google Apps Script Web App Integration -->
-        <div class="bg-latte-50 rounded-2xl p-3.5 border border-latte-200 space-y-2">
-          <span class="font-extrabold text-warmgray-900 flex items-center gap-1.5 text-xs">
-            <i data-lucide="file-spreadsheet" class="w-4 h-4 text-matcha-600"></i>
-            Google Sheets Web App URL
-          </span>
-          <p class="text-warmgray-600 text-[11px]">
-            Paste your Google Apps Script Web App URL below so purchases instantly append to your live Google Sheet:
-          </p>
+        <div class="bg-latte-50 rounded-2xl p-3 border border-latte-200 space-y-1.5">
+          <span class="font-extrabold text-warmgray-900">Google Sheets Sync URL</span>
           <input type="url" id="cfgGoogleScriptUrl" placeholder="https://script.google.com/macros/s/.../exec"
             class="w-full bg-white border border-latte-200 rounded-xl px-3 py-2 text-xs text-warmgray-800">
         </div>
 
-        <!-- Phone Home Screen Guide -->
-        <div class="bg-matcha-50/80 border border-matcha-200 rounded-2xl p-3.5 text-matcha-900 space-y-1.5">
-          <div class="font-extrabold flex items-center gap-1.5 text-xs text-matcha-900">
-            <i data-lucide="smartphone" class="w-4 h-4 text-matcha-600"></i> Add to Phone Home Screen (1-Tap Access):
-          </div>
-          <ul class="text-[11px] text-warmgray-700 list-disc list-inside space-y-1">
-            <li><strong>iPhone (Safari):</strong> Tap <span class="font-bold text-matcha-800">Share</span> &rarr; Select <span class="font-bold text-matcha-800">"Add to Home Screen"</span>.</li>
-            <li><strong>Android (Chrome):</strong> Tap the 3 dots menu &rarr; Select <span class="font-bold text-matcha-800">"Add to Home screen"</span>.</li>
-          </ul>
-        </div>
-
-        <!-- Backup & Reset -->
-        <div class="pt-2 border-t border-latte-100 flex gap-2">
+        <div class="flex gap-2 pt-1">
           <button id="backupJsonBtn" class="flex-1 py-2 bg-latte-100 hover:bg-latte-200 text-warmgray-800 font-bold rounded-xl border border-latte-200">
-            Backup JSON
+            Backup Data
           </button>
           <button id="resetSampleDataBtn" class="flex-1 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-xl border border-rose-200">
             Reset Data
@@ -650,23 +521,33 @@
   <script>
     lucide.createIcons();
 
-    const STORAGE_KEY = 'aeron_naya_budget_transactions_v2';
-    const CONFIG_KEY = 'aeron_naya_budget_config_v2';
+    const STORAGE_KEY = 'aeron_naya_budget_transactions_v3';
+    const CONFIG_KEY = 'aeron_naya_budget_config_v3';
 
+    // Default configuration with individual person targets
     const defaultConfig = {
-      monthlyBudget: 60000,
-      rent: 16000,
-      electric: 5500,
-      water: 1200,
-      otherBills: 999,
+      // Aeron's Priorities & Limits
+      aeron: {
+        budget: 35000,
+        rent: 8000,
+        electric: 2780,
+        water: 600,
+        other: 999
+      },
+      // Naya's Priorities & Limits
+      naya: {
+        budget: 25000,
+        rent: 8000,
+        electric: 2780,
+        water: 600,
+        other: 0
+      },
       emails: 'aeron@example.com, naya@example.com',
       scriptUrl: ''
     };
 
     let appConfig = JSON.parse(localStorage.getItem(CONFIG_KEY)) || defaultConfig;
-
-    // Load existing transactions (Embedded from Google Sheet)
-    let EMBEDDED_INITIAL_DATA = [];
+    if (!appConfig.aeron) appConfig = defaultConfig; // migrate schema
   </script>
   <script src="initial_data_embed.js"></script>
   <script>
@@ -674,14 +555,23 @@
 
     let activePayerFilter = 'All';
     let activeMonthFilter = '';
+    let currentLimiterPerson = 'Aeron'; // 'Aeron' | 'Naya' | 'Both'
+    let modalActivePerson = 'Aeron';
 
     const today = new Date();
     const todayIso = today.toISOString().split('T')[0];
     document.getElementById('inputDate').value = todayIso;
-    document.getElementById('currentDateDisplay').textContent = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
     function formatPHP(amount) {
       return '₱' + (Number(amount) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatCompactPHP(amount) {
+      const num = Number(amount) || 0;
+      if (Math.abs(num) >= 1000) {
+        return '₱' + (num / 1000).toFixed(1) + 'k';
+      }
+      return '₱' + Math.round(num);
     }
 
     function parseTxDate(dateStr) {
@@ -703,7 +593,7 @@
 
     function formatDisplayDate(dateStr) {
       const d = parseTxDate(dateStr);
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
 
     function saveTransactions() {
@@ -728,7 +618,7 @@
       monthSelect.innerHTML = sortedMonths.map(key => {
         const [y, m] = key.split('-');
         const d = new Date(y, m - 1, 1);
-        const label = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        const label = d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
         return `<option value="${key}">${label}</option>`;
       }).join('');
 
@@ -762,7 +652,9 @@
       return s.includes('water bill') || s.includes('electric bill') || s.includes('rent');
     }
 
+    // RENDER THE CLICKABLE INDIVIDUAL LIMITER & METRICS
     function renderMetrics() {
+      // 1. Ledger Balance
       let aeronSpentTotal = 0;
       let aeronTrueShareTotal = 0;
       let nayaSpentTotal = 0;
@@ -773,111 +665,180 @@
         const aShare = Number(t.aeronShare) || 0;
         const nShare = Number(t.nayaShare) || 0;
 
-        if (t.paidBy === 'Aeron James') {
-          aeronSpentTotal += amt;
-        } else if (t.paidBy === 'Naya') {
-          nayaSpentTotal += amt;
-        }
+        if (t.paidBy === 'Aeron James') aeronSpentTotal += amt;
+        else if (t.paidBy === 'Naya') nayaSpentTotal += amt;
 
         aeronTrueShareTotal += aShare;
         nayaTrueShareTotal += nShare;
       });
 
       document.getElementById('aeronSpentDisplay').textContent = formatPHP(aeronSpentTotal);
-      document.getElementById('aeronShareDisplay').textContent = formatPHP(aeronTrueShareTotal);
       document.getElementById('nayaSpentDisplay').textContent = formatPHP(nayaSpentTotal);
-      document.getElementById('nayaShareDisplay').textContent = formatPHP(nayaTrueShareTotal);
 
       const aeronNet = aeronSpentTotal - aeronTrueShareTotal;
       const settlementText = document.getElementById('settlementText');
 
       if (Math.abs(aeronNet) < 0.5) {
-        settlementText.textContent = "All squared up! Nobody owes anything.";
-        settlementText.className = "text-matcha-700 font-bold";
+        settlementText.textContent = "All squared up! ₱0 owed.";
       } else if (aeronNet > 0) {
-        settlementText.textContent = `Naya owes Aeron James ${formatPHP(aeronNet)}`;
-        settlementText.className = "text-matcha-800 font-bold";
+        settlementText.textContent = `Naya owes Aeron ${formatPHP(aeronNet)}`;
       } else {
-        settlementText.textContent = `Aeron James owes Naya ${formatPHP(Math.abs(aeronNet))}`;
-        settlementText.className = "text-rose-700 font-bold";
+        settlementText.textContent = `Aeron owes Naya ${formatPHP(Math.abs(aeronNet))}`;
       }
 
+      // 2. Individual Limiter Calculations for Active Month
       const [selYear, selMonth] = (activeMonthFilter || `${today.getFullYear()}-${today.getMonth() + 1}`).split('-');
       const monthTx = transactions.filter(t => {
         const d = parseTxDate(t.date);
         return d.getFullYear() == selYear && (d.getMonth() + 1) == selMonth;
       });
 
-      let monthTotalSpend = 0;
-      let monthDiscretionarySpend = 0;
-      let monthFixedBillsSpend = 0;
+      let aeronSpentThisMonth = 0;
+      let nayaSpentThisMonth = 0;
 
       monthTx.forEach(t => {
-        const amt = Number(t.amount) || 0;
-        monthTotalSpend += amt;
-        if (isSetBill(t.description)) {
-          monthFixedBillsSpend += amt;
-        } else {
-          monthDiscretionarySpend += amt;
+        // Discretionary spend excludes set bills
+        if (!isSetBill(t.description)) {
+          aeronSpentThisMonth += (Number(t.aeronShare) || 0);
+          nayaSpentThisMonth += (Number(t.nayaShare) || 0);
         }
       });
 
-      const totalBudget = Number(appConfig.monthlyBudget) || 60000;
-      const fixedBillsReserved = (Number(appConfig.rent) || 0) + (Number(appConfig.electric) || 0) + (Number(appConfig.water) || 0) + (Number(appConfig.otherBills) || 0);
-      const discretionaryPool = Math.max(0, totalBudget - fixedBillsReserved);
-      const discretionaryRemaining = discretionaryPool - monthDiscretionarySpend;
+      // Compute figures based on currentLimiterPerson
+      let targetBudget = 0;
+      let fixedBills = 0;
+      let actualSpent = 0;
+      let personLabel = "Aeron's Safe to Spend";
 
-      document.getElementById('cfgTotalBudget').textContent = formatPHP(totalBudget);
-      document.getElementById('cfgFixedBillsTotal').textContent = '-' + formatPHP(fixedBillsReserved);
-      document.getElementById('cfgDiscretionaryPool').textContent = formatPHP(discretionaryPool);
-      document.getElementById('monthDiscretionarySpent').textContent = formatPHP(monthDiscretionarySpend);
-      document.getElementById('monthTotalSpendDisplay').textContent = formatPHP(monthTotalSpend);
-      document.getElementById('monthTxCount').textContent = `${monthTx.length} expenses logged`;
+      const aeronCfg = appConfig.aeron;
+      const nayaCfg = appConfig.naya;
 
-      const remainingElem = document.getElementById('discretionaryRemainingDisplay');
-      remainingElem.textContent = formatPHP(discretionaryRemaining) + ' Left';
+      const aeronBills = (aeronCfg.rent || 0) + (aeronCfg.electric || 0) + (aeronCfg.water || 0) + (aeronCfg.other || 0);
+      const nayaBills = (nayaCfg.rent || 0) + (nayaCfg.electric || 0) + (nayaCfg.water || 0) + (nayaCfg.other || 0);
 
+      if (currentLimiterPerson === 'Aeron') {
+        personLabel = "Aeron's Safe to Spend";
+        targetBudget = aeronCfg.budget;
+        fixedBills = aeronBills;
+        actualSpent = aeronSpentThisMonth;
+      } else if (currentLimiterPerson === 'Naya') {
+        personLabel = "Naya's Safe to Spend";
+        targetBudget = nayaCfg.budget;
+        fixedBills = nayaBills;
+        actualSpent = nayaSpentThisMonth;
+      } else {
+        personLabel = "Combined Safe to Spend";
+        targetBudget = (aeronCfg.budget + nayaCfg.budget);
+        fixedBills = (aeronBills + nayaBills);
+        actualSpent = (aeronSpentThisMonth + nayaSpentThisMonth);
+      }
+
+      const safePool = Math.max(0, targetBudget - fixedBills);
+      const remaining = safePool - actualSpent;
+
+      // Update Hero display
+      document.getElementById('limiterTargetOwnerLabel').textContent = personLabel;
+      const heroElem = document.getElementById('heroRemainingAmount');
+      heroElem.textContent = formatPHP(remaining);
+
+      // Daily Allowance
       const now = new Date();
       const isCurrentMonth = (now.getFullYear() == selYear && (now.getMonth() + 1) == selMonth);
       const daysInMonth = new Date(selYear, selMonth, 0).getDate();
       const currentDay = isCurrentMonth ? now.getDate() : daysInMonth;
       const daysRemaining = Math.max(1, daysInMonth - currentDay + 1);
-      
-      const dailyAllowance = Math.max(0, discretionaryRemaining / daysRemaining);
-      document.getElementById('dailyPaceDisplay').textContent = `${formatPHP(dailyAllowance)} / day (${daysRemaining}d left)`;
+      const dailyAllowance = Math.max(0, remaining / daysRemaining);
 
-      const percentUsed = discretionaryPool > 0 ? Math.min(100, (monthDiscretionarySpend / discretionaryPool) * 100) : 100;
-      const progressBar = document.getElementById('limiterProgressBar');
-      const percentDisplay = document.getElementById('limiterPercentDisplay');
-      const alertBadge = document.getElementById('limiterAlertBadge');
+      // Update 4-Grid Metrics
+      document.getElementById('valPersonLimit').textContent = formatCompactPHP(targetBudget);
+      document.getElementById('valPersonBills').textContent = '-' + formatCompactPHP(fixedBills);
+      document.getElementById('valPersonSpent').textContent = formatCompactPHP(actualSpent);
+      document.getElementById('valPersonDaily').textContent = `${formatCompactPHP(dailyAllowance)}/d`;
+
+      // Progress bar & %
+      const percentUsed = safePool > 0 ? Math.min(100, (actualSpent / safePool) * 100) : 100;
+      const progressBar = document.getElementById('heroProgressBar');
+      const burnBadge = document.getElementById('limiterBurnPercent');
 
       progressBar.style.width = `${percentUsed}%`;
-      percentDisplay.textContent = `${Math.round(percentUsed)}%`;
+      burnBadge.textContent = `${Math.round(percentUsed)}% used`;
 
-      if (discretionaryRemaining < 0) {
-        remainingElem.className = "text-xl font-extrabold text-rose-600";
-        percentDisplay.className = "font-mono font-bold text-rose-600";
+      if (remaining < 0) {
+        heroElem.className = "text-3xl font-extrabold font-mono tracking-tight text-rose-600";
         progressBar.className = "h-full rounded-full bg-rose-500 transition-all duration-500";
-        alertBadge.className = "p-2.5 rounded-xl text-xs font-bold bg-rose-50 border-rose-200 text-rose-700 flex items-center gap-1.5";
-        alertBadge.innerHTML = `<i data-lucide="alert-octagon" class="w-4 h-4 text-rose-600"></i> OVERSPENT! Exceeded discretionary allowance by ${formatPHP(Math.abs(discretionaryRemaining))}`;
-        alertBadge.classList.remove('hidden');
+        burnBadge.className = "text-xs font-mono font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-lg";
       } else if (percentUsed > 85) {
-        remainingElem.className = "text-xl font-extrabold text-amber-700";
-        percentDisplay.className = "font-mono font-bold text-amber-700";
+        heroElem.className = "text-3xl font-extrabold font-mono tracking-tight text-amber-700";
         progressBar.className = "h-full rounded-full bg-amber-500 transition-all duration-500";
-        alertBadge.className = "p-2.5 rounded-xl text-xs font-bold bg-amber-50 border-amber-200 text-amber-800 flex items-center gap-1.5";
-        alertBadge.innerHTML = `<i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600"></i> Warning: Over 85% of safe discretionary budget used!`;
-        alertBadge.classList.remove('hidden');
+        burnBadge.className = "text-xs font-mono font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-lg";
       } else {
-        remainingElem.className = "text-xl font-extrabold text-matcha-700";
-        percentDisplay.className = "font-mono font-bold text-matcha-700";
-        progressBar.className = "h-full rounded-full bg-gradient-to-r from-matcha-600 to-matcha-400 transition-all duration-500";
-        alertBadge.classList.add('hidden');
+        heroElem.className = "text-3xl font-extrabold font-mono tracking-tight text-warmgray-900";
+        progressBar.className = "h-full rounded-full bg-matcha-600 transition-all duration-500";
+        burnBadge.className = "text-xs font-mono font-bold text-matcha-700 bg-matcha-100 px-2 py-0.5 rounded-lg";
       }
-
-      lucide.createIcons();
     }
 
+    // Switch Limiter Person Tab
+    const tabAeron = document.getElementById('tabLimiterAeron');
+    const tabNaya = document.getElementById('tabLimiterNaya');
+    const tabBoth = document.getElementById('tabLimiterBoth');
+
+    function setLimiterPerson(p) {
+      currentLimiterPerson = p;
+      tabAeron.className = p === 'Aeron' ? 'flex-1 py-1.5 rounded-xl transition-all flex items-center justify-center gap-1.5 bg-white text-sky-800 soft-shadow' : 'flex-1 py-1.5 rounded-xl transition-all flex items-center justify-center gap-1.5 text-warmgray-600';
+      tabNaya.className = p === 'Naya' ? 'flex-1 py-1.5 rounded-xl transition-all flex items-center justify-center gap-1.5 bg-white text-rose-800 soft-shadow' : 'flex-1 py-1.5 rounded-xl transition-all flex items-center justify-center gap-1.5 text-warmgray-600';
+      tabBoth.className = p === 'Both' ? 'flex-1 py-1.5 rounded-xl transition-all flex items-center justify-center gap-1.5 bg-white text-warmgray-900 soft-shadow' : 'flex-1 py-1.5 rounded-xl transition-all flex items-center justify-center gap-1.5 text-warmgray-600';
+      renderMetrics();
+    }
+
+    tabAeron.addEventListener('click', () => setLimiterPerson('Aeron'));
+    tabNaya.addEventListener('click', () => setLimiterPerson('Naya'));
+    tabBoth.addEventListener('click', () => setLimiterPerson('Both'));
+
+    // Open Fast Limiter Edit Modal
+    const budgetModal = document.getElementById('budgetModal');
+    const modalTabAeron = document.getElementById('modalTabAeron');
+    const modalTabNaya = document.getElementById('modalTabNaya');
+
+    function loadModalPersonData(p) {
+      modalActivePerson = p;
+      modalTabAeron.className = p === 'Aeron' ? 'flex-1 py-1.5 rounded-xl transition-all flex items-center justify-center gap-1.5 bg-white text-sky-800 soft-shadow' : 'flex-1 py-1.5 rounded-xl transition-all flex items-center justify-center gap-1.5 text-warmgray-600';
+      modalTabNaya.className = p === 'Naya' ? 'flex-1 py-1.5 rounded-xl transition-all flex items-center justify-center gap-1.5 bg-white text-rose-800 soft-shadow' : 'flex-1 py-1.5 rounded-xl transition-all flex items-center justify-center gap-1.5 text-warmgray-600';
+
+      const cfg = (p === 'Aeron') ? appConfig.aeron : appConfig.naya;
+      document.getElementById('labelPersonTarget').textContent = `${p}'s Monthly Target Limit`;
+      document.getElementById('inputPersonTarget').value = cfg.budget;
+      document.getElementById('inputPersonRent').value = cfg.rent;
+      document.getElementById('inputPersonElectric').value = cfg.electric;
+      document.getElementById('inputPersonWater').value = cfg.water;
+      document.getElementById('inputPersonOther').value = cfg.other || 0;
+    }
+
+    modalTabAeron.addEventListener('click', () => loadModalPersonData('Aeron'));
+    modalTabNaya.addEventListener('click', () => loadModalPersonData('Naya'));
+
+    document.getElementById('heroLimiterClickArea').addEventListener('click', () => {
+      loadModalPersonData(currentLimiterPerson === 'Naya' ? 'Naya' : 'Aeron');
+      budgetModal.classList.remove('hidden');
+    });
+
+    document.getElementById('closeBudgetModalBtn').addEventListener('click', () => budgetModal.classList.add('hidden'));
+
+    // Save Person Limit Settings
+    document.getElementById('savePersonBudgetBtn').addEventListener('click', () => {
+      const cfg = (modalActivePerson === 'Aeron') ? appConfig.aeron : appConfig.naya;
+      cfg.budget = Number(document.getElementById('inputPersonTarget').value) || 0;
+      cfg.rent = Number(document.getElementById('inputPersonRent').value) || 0;
+      cfg.electric = Number(document.getElementById('inputPersonElectric').value) || 0;
+      cfg.water = Number(document.getElementById('inputPersonWater').value) || 0;
+      cfg.other = Number(document.getElementById('inputPersonOther').value) || 0;
+
+      localStorage.setItem(CONFIG_KEY, JSON.stringify(appConfig));
+      budgetModal.classList.add('hidden');
+      renderMetrics();
+    });
+
+    // Render Transaction List
     function renderTransactions() {
       const listContainer = document.getElementById('transactionList');
       const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
@@ -906,17 +867,10 @@
 
       if (filtered.length === 0) {
         listContainer.innerHTML = `
-          <div class="p-8 text-center rounded-3xl bg-white border border-latte-200 soft-shadow space-y-2">
-            <div class="w-12 h-12 rounded-2xl bg-latte-100 text-warmgray-400 flex items-center justify-center mx-auto">
-              <i data-lucide="inbox" class="w-6 h-6"></i>
-            </div>
-            <p class="text-xs text-warmgray-500 font-semibold">No expenses found for this month.</p>
-            <button onclick="document.getElementById('openAddModalBtn').click()" class="text-xs text-matcha-700 font-extrabold hover:underline">
-              + Log an expense now
-            </button>
+          <div class="p-6 text-center rounded-3xl bg-white border border-latte-200 soft-shadow text-xs text-warmgray-400">
+            No expenses recorded for this month.
           </div>
         `;
-        lucide.createIcons();
         return;
       }
 
@@ -925,44 +879,40 @@
         const isBill = isSetBill(t.description);
 
         let splitBadge = '50/50';
-        let splitBadgeClass = 'bg-latte-100 text-warmgray-700 border-latte-200';
+        let splitBadgeClass = 'bg-latte-100 text-warmgray-700';
         if (t.splitCode === 'A') {
           splitBadge = 'Aeron 100%';
-          splitBadgeClass = 'bg-sky-50 text-sky-800 border-sky-200';
+          splitBadgeClass = 'bg-sky-50 text-sky-800';
         } else if (t.splitCode === 'B') {
           splitBadge = 'Naya 100%';
-          splitBadgeClass = 'bg-rose-50 text-rose-800 border-rose-200';
+          splitBadgeClass = 'bg-rose-50 text-rose-800';
         }
 
         return `
-          <div class="group p-3.5 rounded-2xl bg-white border border-latte-200/90 hover:border-matcha-300 transition-all flex items-center justify-between gap-3 soft-shadow">
-            <div class="flex items-center gap-3 min-w-0">
-              <div class="w-10 h-10 rounded-2xl ${isAeron ? 'bg-sky-50 text-sky-700 border border-sky-100' : 'bg-rose-50 text-rose-600 border border-rose-100'} flex items-center justify-center shrink-0 font-extrabold text-xs">
+          <div class="group p-3 rounded-2xl bg-white border border-latte-200/90 hover:border-matcha-300 transition-all flex items-center justify-between gap-3 soft-shadow">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <div class="w-8 h-8 rounded-xl ${isAeron ? 'bg-sky-50 text-sky-700' : 'bg-rose-50 text-rose-600'} flex items-center justify-center shrink-0 font-extrabold text-[11px]">
                 ${isAeron ? 'AJ' : 'NY'}
               </div>
 
-              <div class="min-w-0 space-y-0.5">
+              <div class="min-w-0">
                 <div class="flex items-center gap-1.5 flex-wrap">
                   <h4 class="text-xs font-bold text-warmgray-900 truncate">${t.description || 'Expense'}</h4>
-                  ${isBill ? '<span class="text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-200">Set Bill</span>' : ''}
+                  ${isBill ? '<span class="text-[9px] font-bold px-1.5 rounded bg-amber-100 text-amber-800">Bill</span>' : ''}
                 </div>
-                <div class="flex items-center gap-2 text-[11px] text-warmgray-500 font-medium">
+                <div class="flex items-center gap-1.5 text-[10px] text-warmgray-500 font-medium">
                   <span>${formatDisplayDate(t.date)}</span>
                   <span>•</span>
-                  <span class="text-warmgray-700 font-semibold">${t.category || 'General'}</span>
+                  <span>${t.category || 'Cash'}</span>
                   <span>•</span>
-                  <span class="text-[10px] px-1.5 py-0.5 rounded-md border font-semibold ${splitBadgeClass}">${splitBadge}</span>
+                  <span class="px-1 rounded ${splitBadgeClass}">${splitBadge}</span>
                 </div>
-                ${t.remarks ? `<p class="text-[10px] text-warmgray-400 italic truncate">${t.remarks}</p>` : ''}
               </div>
             </div>
 
             <div class="text-right shrink-0">
-              <div class="text-sm font-extrabold font-mono text-matcha-700">${formatPHP(t.amount)}</div>
-              <div class="text-[10px] text-warmgray-500 font-mono font-medium">
-                ${isAeron ? `Naya: ${formatPHP(t.nayaShare)}` : `Aeron: ${formatPHP(t.aeronShare)}`}
-              </div>
-              <button onclick="deleteTransaction('${t.id || idx}')" class="opacity-0 group-hover:opacity-100 text-[10px] text-rose-600 hover:text-rose-800 underline mt-0.5 transition-opacity font-semibold">
+              <div class="text-xs font-extrabold font-mono text-matcha-700">${formatPHP(t.amount)}</div>
+              <button onclick="deleteTransaction('${t.id || idx}')" class="opacity-0 group-hover:opacity-100 text-[10px] text-rose-600 underline transition-opacity">
                 Delete
               </button>
             </div>
@@ -980,23 +930,13 @@
     }
 
     window.deleteTransaction = function(idOrIdx) {
-      if (confirm('Delete this expense entry?')) {
+      if (confirm('Delete this entry?')) {
         transactions.splice(Number(idOrIdx), 1);
         saveTransactions();
       }
     };
 
-    function updateSplitExplanation(code) {
-      const elem = document.getElementById('splitExplanation');
-      if (code === 'A') elem.textContent = 'Aeron pays 100% (personal)';
-      else if (code === 'B') elem.textContent = 'Naya pays 100% (personal)';
-      else elem.textContent = '50% Aeron / 50% Naya';
-    }
-
-    document.querySelectorAll('input[name="splitCode"]').forEach(radio => {
-      radio.addEventListener('change', (e) => updateSplitExplanation(e.target.value));
-    });
-
+    // Quick Amount buttons
     document.querySelectorAll('.quick-amt-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const amtInput = document.getElementById('inputAmount');
@@ -1006,13 +946,14 @@
       });
     });
 
+    // Quick Description buttons
     document.querySelectorAll('.quick-desc-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        const descInput = document.getElementById('inputDescription');
-        descInput.value = btn.textContent;
+        document.getElementById('inputDescription').value = btn.textContent;
       });
     });
 
+    // Add Modal handlers
     const addModal = document.getElementById('addExpenseModal');
     document.getElementById('openAddModalBtn').addEventListener('click', () => {
       document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
@@ -1021,18 +962,7 @@
     });
     document.getElementById('closeAddModalBtn').addEventListener('click', () => addModal.classList.add('hidden'));
 
-    const budgetModal = document.getElementById('budgetModal');
-    document.getElementById('openBudgetModalBtn').addEventListener('click', () => {
-      document.getElementById('cfgBudgetLimitInput').value = appConfig.monthlyBudget;
-      document.getElementById('cfgRentInput').value = appConfig.rent;
-      document.getElementById('cfgElectricInput').value = appConfig.electric;
-      document.getElementById('cfgWaterInput').value = appConfig.water;
-      document.getElementById('cfgOtherBillsInput').value = appConfig.otherBills;
-      budgetModal.classList.remove('hidden');
-    });
-    document.getElementById('editLimiterBtn').addEventListener('click', () => document.getElementById('openBudgetModalBtn').click());
-    document.getElementById('closeBudgetModalBtn').addEventListener('click', () => budgetModal.classList.add('hidden'));
-
+    // Settings Modal
     const settingsModal = document.getElementById('settingsModal');
     document.getElementById('openSettingsModalBtn').addEventListener('click', () => {
       document.getElementById('cfgEmailRecipients').value = appConfig.emails || '';
@@ -1041,18 +971,7 @@
     });
     document.getElementById('closeSettingsModalBtn').addEventListener('click', () => settingsModal.classList.add('hidden'));
 
-    document.getElementById('saveBudgetSettingsBtn').addEventListener('click', () => {
-      appConfig.monthlyBudget = Number(document.getElementById('cfgBudgetLimitInput').value) || 60000;
-      appConfig.rent = Number(document.getElementById('cfgRentInput').value) || 0;
-      appConfig.electric = Number(document.getElementById('cfgElectricInput').value) || 0;
-      appConfig.water = Number(document.getElementById('cfgWaterInput').value) || 0;
-      appConfig.otherBills = Number(document.getElementById('cfgOtherBillsInput').value) || 0;
-      
-      localStorage.setItem(CONFIG_KEY, JSON.stringify(appConfig));
-      budgetModal.classList.add('hidden');
-      renderAll();
-    });
-
+    // Add Expense Form
     document.getElementById('expenseForm').addEventListener('submit', (e) => {
       e.preventDefault();
 
@@ -1089,7 +1008,7 @@
           mode: 'no-cors',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newTx)
-        }).catch(err => console.log('Google Sheet sync notice:', err));
+        }).catch(err => console.log('Google Sheet sync:', err));
       }
 
       document.getElementById('inputAmount').value = '';
@@ -1098,6 +1017,7 @@
       addModal.classList.add('hidden');
     });
 
+    // Quick Settle
     document.getElementById('quickSettleBtn').addEventListener('click', () => {
       let aeronSpentTotal = 0;
       let aeronTrueShareTotal = 0;
@@ -1108,7 +1028,7 @@
       const net = aeronSpentTotal - aeronTrueShareTotal;
 
       if (Math.abs(net) < 1) {
-        alert('All balances are already settled!');
+        alert('All balances are squared up!');
         return;
       }
 
@@ -1116,11 +1036,11 @@
       const creditor = net > 0 ? 'Aeron James' : 'Naya';
       const amt = Math.abs(net).toFixed(2);
 
-      if (confirm(`Record a full settlement transfer?\n\n${debtor} pays ${creditor} ₱${amt}?`)) {
+      if (confirm(`Record settlement: ${debtor} pays ${creditor} ₱${amt}?`)) {
         transactions.unshift({
           id: Date.now().toString(),
           date: new Date().toISOString().split('T')[0],
-          description: `Settlement Transfer to ${creditor}`,
+          description: `Settlement to ${creditor}`,
           category: 'Transfer',
           amount: parseFloat(amt),
           paidBy: debtor,
@@ -1128,21 +1048,22 @@
           ratio: '',
           aeronShare: parseFloat(amt),
           nayaShare: 0,
-          remarks: 'Full settlement transfer'
+          remarks: 'Settlement'
         });
         saveTransactions();
       }
     });
 
+    // Payer Filter buttons
     const filterAllBtn = document.getElementById('filterAllBtn');
     const filterAeronBtn = document.getElementById('filterAeronBtn');
     const filterNayaBtn = document.getElementById('filterNayaBtn');
 
     function setPayerFilter(filter) {
       activePayerFilter = filter;
-      filterAllBtn.className = filter === 'All' ? 'px-2.5 py-1 rounded-xl bg-matcha-600 text-white font-bold soft-shadow transition-all' : 'px-2.5 py-1 rounded-xl bg-white text-warmgray-600 border border-latte-200 font-semibold transition-all';
-      filterAeronBtn.className = filter === 'Aeron James' ? 'px-2.5 py-1 rounded-xl bg-sky-600 text-white font-bold soft-shadow transition-all' : 'px-2.5 py-1 rounded-xl bg-white text-warmgray-600 border border-latte-200 font-semibold transition-all';
-      filterNayaBtn.className = filter === 'Naya' ? 'px-2.5 py-1 rounded-xl bg-rose-500 text-white font-bold soft-shadow transition-all' : 'px-2.5 py-1 rounded-xl bg-white text-warmgray-600 border border-latte-200 font-semibold transition-all';
+      filterAllBtn.className = filter === 'All' ? 'px-2.5 py-1 rounded-xl bg-matcha-600 text-white font-bold text-[11px]' : 'px-2.5 py-1 rounded-xl bg-white text-warmgray-600 border border-latte-200 font-semibold text-[11px]';
+      filterAeronBtn.className = filter === 'Aeron James' ? 'px-2.5 py-1 rounded-xl bg-sky-600 text-white font-bold text-[11px]' : 'px-2.5 py-1 rounded-xl bg-white text-warmgray-600 border border-latte-200 font-semibold text-[11px]';
+      filterNayaBtn.className = filter === 'Naya' ? 'px-2.5 py-1 rounded-xl bg-rose-500 text-white font-bold text-[11px]' : 'px-2.5 py-1 rounded-xl bg-white text-warmgray-600 border border-latte-200 font-semibold text-[11px]';
       renderTransactions();
     }
 
@@ -1157,6 +1078,7 @@
 
     document.getElementById('searchInput').addEventListener('input', renderTransactions);
 
+    // Export CSV
     document.getElementById('exportCsvBtn').addEventListener('click', () => {
       const headers = ['Date', 'Description/Item', 'Category', 'Total Amount', 'Paid By', 'Split Code', 'Fixed Share / Ratio', 'Aeron James Share', 'Naya Share', 'Remarks'];
       const rows = transactions.map(t => [
@@ -1182,6 +1104,7 @@
       document.body.removeChild(link);
     });
 
+    // Backup JSON
     document.getElementById('backupJsonBtn').addEventListener('click', () => {
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(transactions, null, 2));
       const dl = document.createElement('a');
@@ -1191,17 +1114,14 @@
     });
 
     document.getElementById('resetSampleDataBtn').addEventListener('click', () => {
-      if (confirm('Reset transactions to Google Sheet original state?')) {
+      if (confirm('Reset to original sheet data?')) {
         transactions = JSON.parse(JSON.stringify(window.EMBEDDED_INITIAL_DATA || []));
         saveTransactions();
         settingsModal.classList.add('hidden');
       }
     });
 
-    document.getElementById('testEmailReminderBtn').addEventListener('click', () => {
-      alert("To activate daily 9:00 PM email reminders:\n\n1. Open your Google Sheet\n2. Extensions > Apps Script\n3. Paste Code.gs\n4. Run setupDailyReminderTrigger()\n\nGoogle will then automatically email you every night at 9:00 PM PHT!");
-    });
-
+    setLimiterPerson('Aeron');
     renderAll();
   </script>
 </body>
